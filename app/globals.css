@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-surface-soft text-ink antialiased;
+  font-size: 17px;
+}
+
+* {
+  @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Signature EKG / pulse-line motif, used sparingly as a section accent */
+.pulse-line {
+  stroke: currentColor;
+  stroke-width: 2.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.card {
+  @apply rounded-xl border border-surface-line bg-white shadow-card;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-[0.975rem] font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-primary {
+  @apply btn bg-brand-blue text-white hover:bg-brand-blue-dark;
+}
+
+.btn-secondary {
+  @apply btn bg-white text-brand-blue border border-brand-blue/30 hover:bg-brand-blue-light;
+}
+
+.btn-ghost {
+  @apply btn bg-transparent text-ink-soft hover:bg-surface-soft;
+}
+
+.input-field {
+  @apply w-full rounded-lg border border-surface-line bg-white px-4 py-3 text-ink placeholder:text-ink-muted focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20;
+}
