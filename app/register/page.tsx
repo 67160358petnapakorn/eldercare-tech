@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Leaf, CheckCircle2, Users, HeartHandshake, Stethoscope } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -90,7 +91,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface-soft px-5 py-10">
+    <div className="relative flex min-h-screen items-center justify-center bg-surface-soft px-5 py-10">
+      <ThemeToggle className="absolute right-4 top-4 bg-surface shadow-card" />
       <div className="w-full max-w-lg">
         <Link
           href="/"
@@ -203,7 +205,7 @@ export default function RegisterPage() {
             </fieldset>
 
             {error ? (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="rounded-lg border border-status-red/30 bg-status-red-bg px-3 py-2 text-sm text-status-red">
                 {error}
               </p>
             ) : null}

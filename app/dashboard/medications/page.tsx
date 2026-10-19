@@ -131,7 +131,7 @@ export default function MedicationsPage() {
       </div>
 
       {showForm ? (
-        <form onSubmit={handleSubmit} className="rounded-2xl border border-surface-line bg-white p-5 shadow-card" data-test="medication-form">
+        <form onSubmit={handleSubmit} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card" data-test="medication-form">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="space-y-1 text-sm text-ink-soft">
               <span>Elder ID</span>
@@ -175,7 +175,7 @@ export default function MedicationsPage() {
             </label>
           </div>
 
-          {error ? <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+          {error ? <p className="mt-4 rounded-lg border border-status-red/30 bg-status-red-bg px-3 py-2 text-sm text-status-red">{error}</p> : null}
 
           <div className="mt-5 flex justify-end gap-3">
             <button data-test="medication-cancel-btn" type="button" onClick={cancelForm} className="btn-secondary">ยกเลิก</button>
@@ -188,13 +188,13 @@ export default function MedicationsPage() {
       ) : null}
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-surface-line bg-white p-6 text-ink-muted">
+        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-6 text-ink-muted">
           ยังไม่มีข้อมูลยา
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((med) => (
-            <div key={med.id} className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+            <div key={med.id} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2 text-brand-blue">
@@ -208,7 +208,7 @@ export default function MedicationsPage() {
                   <button type="button" data-test={"medication-edit-" + med.id} onClick={() => startEdit(med)} className="rounded-full p-2 hover:bg-surface-soft" aria-label="แก้ไข">
                     <Edit2 size={16} />
                   </button>
-                  <button type="button" data-test={"medication-delete-" + med.id} onClick={() => handleDelete(med.id)} className="rounded-full p-2 text-status-red hover:bg-red-50" aria-label="ลยาข้อมูล">
+                  <button type="button" data-test={"medication-delete-" + med.id} onClick={() => handleDelete(med.id)} className="rounded-full p-2 text-status-red hover:bg-status-red-bg" aria-label="ลยาข้อมูล">
                     <Trash2 size={16} />
                   </button>
                 </div>

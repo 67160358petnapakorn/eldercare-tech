@@ -121,12 +121,12 @@ export default function Sidebar({ onLogout, role }: { onLogout?: () => void; rol
 
   return (
     <>
-      <aside className="hidden w-72 shrink-0 border-r border-surface-line bg-white p-5 lg:block">
+      <aside className="hidden w-72 shrink-0 border-r border-surface-line bg-surface p-5 lg:block">
         <SidebarContentWithLogout onNavigate={() => {}} />
       </aside>
 
       <button
-        className="fixed left-4 top-4 z-40 flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg border border-surface-line bg-white shadow-card lg:hidden"
+        className="fixed left-4 top-4 z-40 flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg border border-surface-line bg-surface shadow-card lg:hidden"
         onClick={() => setOpen(true)}
         aria-label="เปิดเมนู"
       >
@@ -136,11 +136,11 @@ export default function Sidebar({ onLogout, role }: { onLogout?: () => void; rol
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 bg-ink/30"
+            className="absolute inset-0 bg-black/40"
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <aside className="absolute left-0 top-0 h-full w-72 bg-white p-5 shadow-lg">
+          <aside className="absolute left-0 top-0 h-full w-72 bg-surface p-5 shadow-lg">
             <button
               className="absolute right-4 top-4 cursor-pointer text-ink-muted"
               onClick={() => setOpen(false)}

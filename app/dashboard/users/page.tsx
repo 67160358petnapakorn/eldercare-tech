@@ -45,13 +45,13 @@ export default function UsersPage() {
       <h2 className="text-2xl font-bold text-ink">Users / ผู้ใช้งาน</h2>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-surface-line bg-white p-6 text-ink-muted">
+        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-6 text-ink-muted">
           ยังไม่มีข้อมูลผู้ใช้งาน
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((user) => (
-            <div key={user.id} className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+            <div key={user.id} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-blue-light text-brand-blue">

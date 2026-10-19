@@ -35,7 +35,7 @@ export default function HealthPage() {
       <h2 className="text-2xl font-bold text-ink">สุขภาพ</h2>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-surface-line bg-white p-6 text-ink-muted">
+        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-6 text-ink-muted">
           ยังไม่มีข้อมูลสุขภาพ
         </div>
       ) : (
@@ -44,7 +44,7 @@ export default function HealthPage() {
             {cards.map((card) => {
               const Icon = card.icon;
               return (
-                <div key={card.id} className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+                <div key={card.id} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-ink-muted">{card.label}</span>
                     <div className="rounded-lg bg-brand-blue-light p-2 text-brand-blue">
@@ -57,7 +57,7 @@ export default function HealthPage() {
             })}
           </div>
 
-          <div className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+          <div className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
             <h3 className="text-lg font-bold text-ink">ข้อมูลล่าสุด</h3>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <div><span className="text-sm text-ink-muted">น้ำหนัก</span><p className="text-lg font-semibold text-ink">{items[0].weight ?? "-"} kg</p></div>

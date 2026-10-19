@@ -32,13 +32,13 @@ export default function ReviewsPage() {
       <h2 className="text-2xl font-bold text-ink">Review / ความประทับใจ</h2>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-surface-line bg-white p-6 text-ink-muted">
+        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-6 text-ink-muted">
           ยังไม่มีข้อมูลรีวิว
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((review) => (
-            <div key={review.id} className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+            <div key={review.id} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2 text-brand-blue">

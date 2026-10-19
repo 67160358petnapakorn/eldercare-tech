@@ -10,7 +10,7 @@ const footerLinks = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-surface-line bg-white">
+    <footer className="border-t border-surface-line bg-surface">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-5 py-10 text-center sm:px-8">
         <div className="flex items-center gap-2 text-lg font-bold text-brand-blue">
           <Leaf size={20} className="text-brand-green" aria-hidden="true" />

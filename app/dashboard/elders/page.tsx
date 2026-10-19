@@ -98,7 +98,7 @@ export default function EldersPage() {
       </div>
 
       {editingId ? (
-        <form onSubmit={saveEdit} className="rounded-2xl border border-surface-line bg-white p-5 shadow-card" data-test="elder-edit-form">
+        <form onSubmit={saveEdit} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card" data-test="elder-edit-form">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="space-y-1 text-sm text-ink-soft">
               <span>ชื่อ</span>
@@ -134,7 +134,7 @@ export default function EldersPage() {
             </label>
           </div>
 
-          {error ? <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+          {error ? <p className="mt-4 rounded-lg border border-status-red/30 bg-status-red-bg px-3 py-2 text-sm text-status-red">{error}</p> : null}
 
           <div className="mt-5 flex justify-end gap-3">
             <button type="button" data-test="elder-cancel-btn" onClick={cancelEdit} className="btn-secondary flex items-center gap-2"><X size={16} /> ยกเลิก</button>
@@ -144,13 +144,13 @@ export default function EldersPage() {
       ) : null}
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-surface-line bg-white p-6 text-ink-muted">
+        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-6 text-ink-muted">
           ยังไม่มีข้อมูลผู้สูงอายุ
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {items.map((elder) => (
-            <div key={elder.id} className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+            <div key={elder.id} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-brand-blue">ผู้สูงอายุ</p>

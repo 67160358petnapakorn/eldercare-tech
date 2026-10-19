@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -8,31 +9,35 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Every value is a CSS variable (defined per-theme in globals.css)
+        // instead of a literal hex — so every existing usage of e.g.
+        // `text-ink` or `bg-surface-soft` across the app automatically
+        // follows the active theme with zero changes to component code.
         brand: {
-          blue: "#1E6FA8",
-          "blue-dark": "#155482",
-          "blue-light": "#E7F1F8",
-          green: "#2E9B6E",
-          "green-dark": "#227A56",
-          "green-light": "#E6F5EE",
+          blue: "rgb(var(--color-brand-blue) / <alpha-value>)",
+          "blue-dark": "rgb(var(--color-brand-blue-dark) / <alpha-value>)",
+          "blue-light": "rgb(var(--color-brand-blue-light) / <alpha-value>)",
+          green: "rgb(var(--color-brand-green) / <alpha-value>)",
+          "green-dark": "rgb(var(--color-brand-green-dark) / <alpha-value>)",
+          "green-light": "rgb(var(--color-brand-green-light) / <alpha-value>)",
         },
         ink: {
-          DEFAULT: "#1F2A33",
-          soft: "#4C5A65",
-          muted: "#7C8993",
+          DEFAULT: "rgb(var(--color-ink) / <alpha-value>)",
+          soft: "rgb(var(--color-ink-soft) / <alpha-value>)",
+          muted: "rgb(var(--color-ink-muted) / <alpha-value>)",
         },
         surface: {
-          DEFAULT: "#FFFFFF",
-          soft: "#F6F8F9",
-          line: "#E3E9EC",
+          DEFAULT: "rgb(var(--color-surface) / <alpha-value>)",
+          soft: "rgb(var(--color-surface-soft) / <alpha-value>)",
+          line: "rgb(var(--color-surface-line) / <alpha-value>)",
         },
         status: {
-          amber: "#C7821A",
-          "amber-bg": "#FBF1E1",
-          red: "#C0392B",
-          "red-bg": "#FBEAE8",
-          green: "#227A56",
-          "green-bg": "#E6F5EE",
+          amber: "rgb(var(--color-status-amber) / <alpha-value>)",
+          "amber-bg": "rgb(var(--color-status-amber-bg) / <alpha-value>)",
+          red: "rgb(var(--color-status-red) / <alpha-value>)",
+          "red-bg": "rgb(var(--color-status-red-bg) / <alpha-value>)",
+          green: "rgb(var(--color-status-green) / <alpha-value>)",
+          "green-bg": "rgb(var(--color-status-green-bg) / <alpha-value>)",
         },
       },
       fontFamily: {

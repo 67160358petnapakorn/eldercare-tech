@@ -61,13 +61,13 @@ export default function NotificationsPage() {
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-surface-line bg-white p-6 text-ink-muted">
+        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-6 text-ink-muted">
           ยังไม่มีการแจ้งเตือน
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+            <div key={item.id} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
               <div className="flex items-start gap-3">
                 <div className="mt-1 rounded-full bg-brand-blue-light p-2 text-brand-blue">
                   <BellRing size={16} />

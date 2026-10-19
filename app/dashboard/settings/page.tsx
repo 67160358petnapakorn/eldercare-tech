@@ -83,7 +83,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_1.5fr]">
-        <div className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+        <div className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-blue-light text-brand-blue">
               <UserRound size={22} />
@@ -110,7 +110,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+        <div className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
           <div className="flex items-center gap-2">
             <ShieldCheck className="text-brand-blue" size={18} />
             <h3 className="text-lg font-semibold text-ink">เปลี่ยนรหัสผ่าน</h3>
@@ -163,8 +163,8 @@ export default function SettingsPage() {
               <div
                 className={`rounded-lg border px-3 py-2 text-sm ${
                   status.type === "success"
-                    ? "border-green-200 bg-green-50 text-green-700"
-                    : "border-red-200 bg-red-50 text-red-700"
+                    ? "border-status-green/30 bg-status-green-bg text-status-green"
+                    : "border-status-red/30 bg-status-red-bg text-status-red"
                 }`}
               >
                 {status.message}
@@ -178,7 +178,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+      <div className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
         <div className="flex items-center gap-2">
           <LockKeyhole className="text-brand-blue" size={18} />
           <h3 className="text-lg font-semibold text-ink">ความปลอดภัย</h3>

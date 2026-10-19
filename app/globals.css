@@ -2,6 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Theme tokens as CSS variables (R G B triplets, consumed via Tailwind's
+ * `rgb(var(--x) / <alpha-value>)` pattern in tailwind.config.ts). Every
+ * existing `bg-surface-soft`, `text-ink`, `bg-brand-blue` etc. usage across
+ * the whole app follows whichever theme is active with zero component
+ * changes — only these two blocks need to know the actual color values.
+ */
+:root {
+  color-scheme: light;
+
+  --color-brand-blue: 30 111 168;
+  --color-brand-blue-dark: 21 84 130;
+  --color-brand-blue-light: 231 241 248;
+  --color-brand-green: 46 155 110;
+  --color-brand-green-dark: 34 122 86;
+  --color-brand-green-light: 230 245 238;
+
+  --color-ink: 31 42 51;
+  --color-ink-soft: 76 90 101;
+  --color-ink-muted: 124 137 147;
+
+  --color-surface: 255 255 255;
+  --color-surface-soft: 246 248 249;
+  --color-surface-line: 227 233 236;
+
+  --color-status-amber: 199 130 26;
+  --color-status-amber-bg: 251 241 225;
+  --color-status-red: 192 57 43;
+  --color-status-red-bg: 251 234 232;
+  --color-status-green: 34 122 86;
+  --color-status-green-bg: 230 245 238;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --color-brand-blue: 76 159 224;
+  --color-brand-blue-dark: 107 178 234;
+  --color-brand-blue-light: 22 40 59;
+  --color-brand-green: 63 190 139;
+  --color-brand-green-dark: 88 212 163;
+  --color-brand-green-light: 19 42 32;
+
+  --color-ink: 230 237 243;
+  --color-ink-soft: 155 168 181;
+  --color-ink-muted: 115 128 139;
+
+  --color-surface: 22 27 34;
+  --color-surface-soft: 13 17 23;
+  --color-surface-line: 45 51 59;
+
+  --color-status-amber: 224 164 64;
+  --color-status-amber-bg: 58 44 18;
+  --color-status-red: 224 86 74;
+  --color-status-red-bg: 58 23 21;
+  --color-status-green: 63 190 139;
+  --color-status-green-bg: 19 42 32;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -9,6 +68,7 @@ html {
 body {
   @apply bg-surface-soft text-ink antialiased;
   font-size: 17px;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 * {
@@ -45,7 +105,7 @@ body {
  */
 @layer components {
   .card {
-    @apply rounded-xl border border-surface-line bg-white shadow-card;
+    @apply rounded-xl border border-surface-line bg-surface shadow-card;
   }
 
   .btn {
@@ -57,7 +117,7 @@ body {
   }
 
   .btn-secondary {
-    @apply btn bg-white text-brand-blue border border-brand-blue/30 hover:bg-brand-blue-light;
+    @apply btn bg-surface text-brand-blue border border-brand-blue/30 hover:bg-brand-blue-light;
   }
 
   .btn-ghost {
@@ -65,12 +125,12 @@ body {
   }
 
   .input-field {
-    @apply w-full rounded-xl border border-surface-line bg-white px-4 py-3 text-ink placeholder:text-ink-muted focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20;
+    @apply w-full rounded-xl border border-surface-line bg-surface px-4 py-3 text-ink placeholder:text-ink-muted focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20;
     min-height: 48px;
   }
 
   .input-shell {
-    @apply relative overflow-hidden rounded-xl border border-surface-line bg-surface-soft/80 transition-all duration-200 focus-within:border-brand-blue focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-blue/20;
+    @apply relative overflow-hidden rounded-xl border border-surface-line bg-surface-soft/80 transition-all duration-200 focus-within:border-brand-blue focus-within:bg-surface focus-within:ring-2 focus-within:ring-brand-blue/20;
   }
 
   .input-icon {

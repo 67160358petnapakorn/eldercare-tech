@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -25,9 +25,42 @@ const ranges: { key: RangeKey; label: string; data: typeof heartRateToday }[] = 
   { key: "month", label: "30 วัน", data: heartRateMonth },
 ];
 
+// Recharts renders raw SVG with color values passed as JS props, not CSS
+// classes — `stroke="#E3E9EC"` can't follow a `.dark` class the way
+// `className="stroke-surface-line"` could elsewhere in the app. Resolve the
+// actual theme CSS variables at render time instead, and re-read them
+// whenever the theme toggle flips the `dark` class.
+function useChartColors() {
+  const [colors, setColors] = useState({ line: "#E3E9EC", muted: "#7C8993", blue: "#1E6FA8", surface: "#FFFFFF", ink: "#1F2A33" });
+
+  useEffect(() => {
+    function read() {
+      const style = getComputedStyle(document.documentElement);
+      const rgb = (name: string, fallback: string) => {
+        const raw = style.getPropertyValue(name).trim();
+        return raw ? `rgb(${raw.replace(/\s+/g, ",")})` : fallback;
+      };
+      setColors({
+        line: rgb("--color-surface-line", "#E3E9EC"),
+        muted: rgb("--color-ink-muted", "#7C8993"),
+        blue: rgb("--color-brand-blue", "#1E6FA8"),
+        surface: rgb("--color-surface", "#FFFFFF"),
+        ink: rgb("--color-ink", "#1F2A33"),
+      });
+    }
+    read();
+    const observer = new MutationObserver(read);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  return colors;
+}
+
 export default function HealthChart() {
   const [activeRange, setActiveRange] = useState<RangeKey>("today");
   const current = ranges.find((r) => r.key === activeRange)!;
+  const colors = useChartColors();
 
   return (
     <DashboardCard title="แนวโน้มสุขภาพ">
@@ -44,7 +77,7 @@ export default function HealthChart() {
             onClick={() => setActiveRange(r.key)}
             className={`cursor-pointer rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               activeRange === r.key
-                ? "bg-white text-brand-blue shadow-card"
+                ? "bg-surface text-brand-blue shadow-card"
                 : "text-ink-muted hover:text-ink-soft"
             }`}
           >
@@ -56,16 +89,16 @@ export default function HealthChart() {
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={current.data} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E3E9EC" />
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.line} />
             <XAxis
               dataKey="time"
-              tick={{ fill: "#7C8993", fontSize: 12 }}
-              axisLine={{ stroke: "#E3E9EC" }}
+              tick={{ fill: colors.muted, fontSize: 12 }}
+              axisLine={{ stroke: colors.line }}
               tickLine={false}
             />
             <YAxis
               domain={["dataMin - 5", "dataMax + 5"]}
-              tick={{ fill: "#7C8993", fontSize: 12 }}
+              tick={{ fill: colors.muted, fontSize: 12 }}
               axisLine={false}
               tickLine={false}
               width={36}
@@ -73,7 +106,9 @@ export default function HealthChart() {
             <Tooltip
               contentStyle={{
                 borderRadius: 10,
-                border: "1px solid #E3E9EC",
+                border: `1px solid ${colors.line}`,
+                background: colors.surface,
+                color: colors.ink,
                 fontSize: 13,
               }}
               formatter={(value: number) => [`${value} BPM`, "อัตราการเต้นหัวใจ"]}
@@ -81,9 +116,9 @@ export default function HealthChart() {
             <Line
               type="monotone"
               dataKey="value"
-              stroke="#1E6FA8"
+              stroke={colors.blue}
               strokeWidth={2.5}
-              dot={{ r: 3, fill: "#1E6FA8" }}
+              dot={{ r: 3, fill: colors.blue }}
               activeDot={{ r: 5 }}
             />
           </LineChart>

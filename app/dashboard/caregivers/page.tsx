@@ -26,13 +26,13 @@ export default function CaregiversPage() {
       <h2 className="text-2xl font-bold text-ink">ผู้ดูแล</h2>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-surface-line bg-white p-6 text-ink-muted">
+        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-6 text-ink-muted">
           ยังไม่มีข้อมูลผู้ดูแล
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {items.map((caregiver) => (
-            <div key={caregiver.id} className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+            <div key={caregiver.id} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-brand-blue">Caregiver</p>

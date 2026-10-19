@@ -144,7 +144,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features */}
-        <section id="features" className="bg-white py-16 sm:py-20">
+        <section id="features" className="bg-surface py-16 sm:py-20">
           <div className="mx-auto max-w-7xl px-5 sm:px-8">
             <h2 className="text-center text-3xl font-bold text-ink">
               ทุกเรื่องการดูแล อยู่ในที่เดียว
@@ -191,7 +191,7 @@ export default function LandingPage() {
         </section>
 
         {/* Trust */}
-        <section id="about" className="bg-white py-16 sm:py-20">
+        <section id="about" className="bg-surface py-16 sm:py-20">
           <div className="mx-auto max-w-7xl px-5 sm:px-8">
             <h2 className="text-center text-3xl font-bold text-ink">
               ความปลอดภัยและความใส่ใจคือสิ่งสำคัญ
@@ -224,7 +224,7 @@ export default function LandingPage() {
             </p>
             <Link
               href="/register"
-              className="btn mt-8 inline-flex bg-white text-brand-blue hover:bg-surface-soft"
+              className="btn mt-8 inline-flex bg-surface text-brand-blue hover:bg-surface-soft"
             >
               เริ่มใช้งานฟรี
             </Link>

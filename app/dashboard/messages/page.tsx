@@ -181,7 +181,7 @@ export default function MessagesPage() {
 
   return (
     <div className="flex h-[calc(100vh-9.5rem)] gap-4">
-      <div className={`w-full shrink-0 overflow-y-auto rounded-2xl border border-surface-line bg-white md:w-80 ${selected ? "hidden md:block" : "block"}`}>
+      <div className={`w-full shrink-0 overflow-y-auto rounded-2xl border border-surface-line bg-surface md:w-80 ${selected ? "hidden md:block" : "block"}`}>
         <div className="border-b border-surface-line p-4">
           <h2 className="text-lg font-bold text-ink">ข้อความ</h2>
           <p className="text-sm text-ink-muted">พูดคุยกับผู้ดูแล ครอบครัว หรือทีมงาน</p>
@@ -227,7 +227,7 @@ export default function MessagesPage() {
         )}
       </div>
 
-      <div className={`flex min-w-0 flex-1 flex-col rounded-2xl border border-surface-line bg-white ${selected ? "flex" : "hidden md:flex"}`}>
+      <div className={`flex min-w-0 flex-1 flex-col rounded-2xl border border-surface-line bg-surface ${selected ? "flex" : "hidden md:flex"}`}>
         {!selected ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-ink-muted">
             <MessageCircleOff size={32} />

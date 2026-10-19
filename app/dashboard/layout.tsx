@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import ThemeToggle from "@/components/ThemeToggle";
 import { apiFetch, getAccessToken, logoutRequest } from "@/lib/api";
 
 export default function DashboardLayout({
@@ -66,7 +67,7 @@ export default function DashboardLayout({
       <Sidebar onLogout={handleLogout} role={user.role} />
 
       <div className="flex min-h-screen flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-surface-line bg-white/90 px-5 py-4 backdrop-blur sm:px-8">
+        <header className="sticky top-0 z-30 border-b border-surface-line bg-surface/90 px-5 py-4 backdrop-blur sm:px-8">
           <div className="flex items-center justify-between gap-4 pl-14 lg:pl-0">
             <div>
               <h1 className="text-lg font-bold text-ink sm:text-xl">
@@ -80,6 +81,7 @@ export default function DashboardLayout({
             </div>
 
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               <button
                 onClick={() => router.push("/dashboard/notifications")}
                 className="relative cursor-pointer rounded-full p-2 text-ink-soft hover:bg-surface-soft"

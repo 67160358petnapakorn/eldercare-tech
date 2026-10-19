@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X, Leaf } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 const navLinks = [
   { href: "/#home", label: "หน้าหลัก" },
@@ -15,7 +16,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-surface-line bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-surface-line bg-surface/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold text-brand-blue">
           <Leaf size={22} className="text-brand-green" aria-hidden="true" />
@@ -35,6 +36,7 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <ThemeToggle />
           <Link href="/login" className="btn-ghost">
             เข้าสู่ระบบ
           </Link>
@@ -43,14 +45,17 @@ export default function Navbar() {
           </Link>
         </div>
 
-        <button
-          className="cursor-pointer text-ink md:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
-          aria-expanded={open}
-        >
-          {open ? <X size={26} /> : <Menu size={26} />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button
+            className="cursor-pointer text-ink"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
+            aria-expanded={open}
+          >
+            {open ? <X size={26} /> : <Menu size={26} />}
+          </button>
+        </div>
       </div>
 
       {open && (

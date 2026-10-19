@@ -190,7 +190,7 @@ export default function BookingsPage() {
       </div>
 
       {showForm ? (
-        <form onSubmit={handleSubmit} className="rounded-2xl border border-surface-line bg-white p-5 shadow-card" data-test="booking-form">
+        <form onSubmit={handleSubmit} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card" data-test="booking-form">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="space-y-1 text-sm text-ink-soft">
               <span>Elder ID</span>
@@ -232,7 +232,7 @@ export default function BookingsPage() {
             </label>
           </div>
 
-          {error ? <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+          {error ? <p className="mt-4 rounded-lg border border-status-red/30 bg-status-red-bg px-3 py-2 text-sm text-status-red">{error}</p> : null}
 
           <div className="mt-5 flex justify-end gap-3">
             <button type="button" data-test="booking-cancel-btn" onClick={cancelForm} className="btn-secondary">ยกเลิก</button>
@@ -245,13 +245,13 @@ export default function BookingsPage() {
       ) : null}
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-surface-line bg-white p-6 text-ink-muted">
+        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-6 text-ink-muted">
           ยังไม่มีข้อมูลการจอง
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((booking) => (
-            <div key={booking.id} className="rounded-2xl border border-surface-line bg-white p-5 shadow-card">
+            <div key={booking.id} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2 text-brand-blue">
@@ -280,7 +280,7 @@ export default function BookingsPage() {
                   <button type="button" data-test={"booking-edit-" + booking.id} onClick={() => startEdit(booking)} className="rounded-full p-2 hover:bg-surface-soft" aria-label="แก้ไข">
                     <Edit2 size={16} />
                   </button>
-                  <button type="button" data-test={"booking-delete-" + booking.id} onClick={() => handleDelete(booking.id)} className="rounded-full p-2 text-status-red hover:bg-red-50" aria-label="ลบการจอง">
+                  <button type="button" data-test={"booking-delete-" + booking.id} onClick={() => handleDelete(booking.id)} className="rounded-full p-2 text-status-red hover:bg-status-red-bg" aria-label="ลบการจอง">
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -308,7 +308,7 @@ export default function BookingsPage() {
       {activePaymentBookingId !== null ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closePayment}>
           <div
-            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+            className="w-full max-w-sm rounded-2xl bg-surface p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -324,7 +324,7 @@ export default function BookingsPage() {
                 กำลังสร้าง QR...
               </div>
             ) : paymentError ? (
-              <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{paymentError}</p>
+              <p className="mt-4 rounded-lg border border-status-red/30 bg-status-red-bg px-3 py-2 text-sm text-status-red">{paymentError}</p>
             ) : (() => {
               const payment = paymentsByBooking[activePaymentBookingId];
               if (!payment) return null;

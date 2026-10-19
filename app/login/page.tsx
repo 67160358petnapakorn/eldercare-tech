@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Leaf, Mail, Lock, Eye, EyeOff, Users, HeartHandshake, ShieldCheck } from "lucide-react";
 import { setTokens } from "@/lib/api";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const demoAccounts = [
   {
@@ -80,12 +81,14 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface-soft px-5 py-10">
+      <ThemeToggle className="absolute right-4 top-4 z-10 bg-surface shadow-card" />
+
       {/* Decorative aurora background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <div className="absolute -left-24 -top-32 h-80 w-80 rounded-full bg-brand-blue/25 blur-3xl" />
         <div className="absolute -right-20 top-10 h-72 w-72 rounded-full bg-brand-green/20 blur-3xl" />
         <div className="absolute bottom-[-6rem] left-1/3 h-72 w-72 rounded-full bg-status-amber/10 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(246,251,255,0.4)_0%,rgba(246,248,249,0.92)_55%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(246,251,255,0.4)_0%,rgba(246,248,249,0.92)_55%)] dark:bg-[linear-gradient(180deg,rgba(13,17,23,0.4)_0%,rgba(13,17,23,0.92)_55%)]" />
       </div>
 
       <div className="relative w-full max-w-md">
@@ -101,7 +104,7 @@ export default function LoginPage() {
           </span>
         </Link>
 
-        <div className="card rounded-2xl border-white/60 bg-white/90 p-6 shadow-[0_20px_45px_-12px_rgba(30,111,168,0.25)] backdrop-blur-xl sm:p-8">
+        <div className="card rounded-2xl border-white/60 dark:border-white/10 bg-surface/90 p-6 shadow-[0_20px_45px_-12px_rgba(30,111,168,0.25)] backdrop-blur-xl sm:p-8">
           <h1 className="text-2xl font-bold text-ink">ยินดีต้อนรับกลับมา</h1>
           <p className="mt-1.5 text-ink-soft">เข้าสู่ระบบเพื่อดูแลคนที่คุณรัก</p>
 
@@ -161,7 +164,7 @@ export default function LoginPage() {
             </div>
 
             {error ? (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="rounded-lg border border-status-red/30 bg-status-red-bg px-3 py-2 text-sm text-status-red">
                 {error}
               </p>
             ) : null}
@@ -184,7 +187,7 @@ export default function LoginPage() {
         </div>
 
         {/* Demo accounts */}
-        <div className="card mt-5 rounded-2xl border-white/60 bg-white/80 p-5 backdrop-blur-xl">
+        <div className="card mt-5 rounded-2xl border-white/60 dark:border-white/10 bg-surface/80 p-5 backdrop-blur-xl">
           <p className="text-sm font-semibold text-ink">
             บัญชีทดลองใช้ <span className="text-ink-muted font-normal">(คลิกเพื่อกรอกอัตโนมัติ)</span>
           </p>
@@ -199,7 +202,7 @@ export default function LoginPage() {
                     setEmail(acc.email);
                     setPassword(acc.password);
                   }}
-                  className="group flex cursor-pointer items-center gap-3 rounded-xl border border-surface-line bg-white p-3 text-left text-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-[0_8px_16px_-6px_rgba(30,111,168,0.25)]"
+                  className="group flex cursor-pointer items-center gap-3 rounded-xl border border-surface-line bg-surface p-3 text-left text-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-[0_8px_16px_-6px_rgba(30,111,168,0.25)]"
                 >
                   <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${acc.iconClass}`}>
                     <Icon size={17} aria-hidden="true" />
