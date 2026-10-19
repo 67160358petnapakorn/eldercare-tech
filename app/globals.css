@@ -35,35 +35,45 @@ body {
   stroke-linejoin: round;
 }
 
-.card {
-  @apply rounded-xl border border-surface-line bg-white shadow-card;
-}
+/*
+ * Custom component classes live in @layer components so Tailwind inserts
+ * them BEFORE the utilities layer in the final stylesheet. Without this,
+ * a class like .input-field (which sets px-4 internally) would come after
+ * @tailwind utilities in source order and win over a same-specificity
+ * utility override like `pl-11` on the element — causing icons to sit on
+ * top of input text instead of being pushed aside.
+ */
+@layer components {
+  .card {
+    @apply rounded-xl border border-surface-line bg-white shadow-card;
+  }
 
-.btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-[0.975rem] font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50;
-}
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-[0.975rem] font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50;
+  }
 
-.btn-primary {
-  @apply btn bg-brand-blue text-white hover:bg-brand-blue-dark;
-}
+  .btn-primary {
+    @apply btn bg-brand-blue text-white hover:bg-brand-blue-dark;
+  }
 
-.btn-secondary {
-  @apply btn bg-white text-brand-blue border border-brand-blue/30 hover:bg-brand-blue-light;
-}
+  .btn-secondary {
+    @apply btn bg-white text-brand-blue border border-brand-blue/30 hover:bg-brand-blue-light;
+  }
 
-.btn-ghost {
-  @apply btn bg-transparent text-ink-soft hover:bg-surface-soft;
-}
+  .btn-ghost {
+    @apply btn bg-transparent text-ink-soft hover:bg-surface-soft;
+  }
 
-.input-field {
-  @apply w-full rounded-xl border border-surface-line bg-white px-4 py-3 text-ink placeholder:text-ink-muted focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20;
-  min-height: 48px;
-}
+  .input-field {
+    @apply w-full rounded-xl border border-surface-line bg-white px-4 py-3 text-ink placeholder:text-ink-muted focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20;
+    min-height: 48px;
+  }
 
-.input-shell {
-  @apply relative overflow-hidden rounded-xl border border-surface-line bg-surface-soft/80 transition-all duration-200 focus-within:border-brand-blue focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-blue/20;
-}
+  .input-shell {
+    @apply relative overflow-hidden rounded-xl border border-surface-line bg-surface-soft/80 transition-all duration-200 focus-within:border-brand-blue focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-blue/20;
+  }
 
-.input-icon {
-  @apply pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-ink-muted;
+  .input-icon {
+    @apply pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-ink-muted;
+  }
 }
