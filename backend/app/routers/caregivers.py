@@ -26,7 +26,7 @@ def list_caregivers(
 ):
     query = db.query(Caregiver)
 
-    if current_user.role != "admin":
+    if current_user.role not in {"admin", "nurse"}:
         query = query.filter(Caregiver.user_id == current_user.id)
 
     if search:
@@ -88,7 +88,7 @@ def get_caregiver(
     if not caregiver:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="caregiver not found")
 
-    if current_user.role != "admin" and caregiver.user_id != current_user.id:
+    if current_user.role not in {"admin", "nurse"} and caregiver.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to access this caregiver",

@@ -3,28 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, MapPin, Phone, Edit2, X, Save } from "lucide-react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-
-async function fetchWithToken(path: string, init?: RequestInit) {
-  const token = localStorage.getItem("eldercare_access_token");
-  if (!token) throw new Error("missing-token");
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      ...(init?.headers ?? {}),
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => ({}));
-    throw new Error(payload?.detail ?? "fetch-failed");
-  }
-
-  return response.json().catch(() => ({}));
-}
+import { apiFetch as fetchWithToken } from "@/lib/api";
 
 export default function EldersPage() {
   const router = useRouter();

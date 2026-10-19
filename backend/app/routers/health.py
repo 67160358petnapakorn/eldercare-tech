@@ -3,6 +3,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.permissions import can_access_elder
 from app.core.security import get_current_user
 from app.models.booking import Booking
 from app.models.caregiver import Caregiver
@@ -21,23 +22,6 @@ from app.schemas.health import (
 )
 
 router = APIRouter(prefix="/api", tags=["Health"])
-
-
-def can_access_elder(current_user: User, elder_id: int, db: Session) -> bool:
-    elder = db.query(Elder).filter(Elder.id == elder_id).first()
-    if not elder:
-        return False
-    if current_user.role == "admin":
-        return True
-    if current_user.role == "family" and elder.user_id == current_user.id:
-        return True
-    if current_user.role == "caregiver":
-        caregiver = db.query(Caregiver).filter(Caregiver.user_id == current_user.id).first()
-        if not caregiver:
-            return False
-        has_booking = db.query(Booking).filter(Booking.elder_id == elder_id, Booking.caregiver_id == caregiver.id).first() is not None
-        return has_booking
-    return False
 
 
 @router.get("/health-records", response_model=PaginatedHealthRecordsResponse)

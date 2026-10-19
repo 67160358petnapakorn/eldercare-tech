@@ -26,8 +26,8 @@ def list_elders(
 ):
     query = db.query(Elder)
 
-    # non-admins should only see elders they own
-    if current_user.role != "admin":
+    # admin and nurse have full visibility; everyone else only sees elders they own
+    if current_user.role not in {"admin", "nurse"}:
         query = query.filter(Elder.user_id == current_user.id)
 
     if search:
@@ -56,7 +56,7 @@ def get_elder(elder_id: int, current_user: User = Depends(get_current_user), db:
     if not elder:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="elder not found")
 
-    if current_user.role != "admin" and elder.user_id != current_user.id:
+    if current_user.role not in {"admin", "nurse"} and elder.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to access this elder")
 
     return elder

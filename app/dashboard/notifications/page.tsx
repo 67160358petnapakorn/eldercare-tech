@@ -3,25 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BellRing, Dot } from "lucide-react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-
-async function fetchWithToken(path: string) {
-  const token = localStorage.getItem("eldercare_access_token");
-  if (!token) throw new Error("missing-token");
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("fetch-failed");
-  }
-
-  return response.json();
-}
+import { apiFetch } from "@/lib/api";
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -30,7 +12,7 @@ export default function NotificationsPage() {
 
   async function loadNotifications() {
     try {
-      const data = await fetchWithToken("/api/notifications?size=20");
+      const data = await apiFetch("/api/notifications?size=20");
       setItems(data.items ?? []);
     } catch {
       router.replace("/login");
@@ -40,23 +22,14 @@ export default function NotificationsPage() {
   }
 
   async function markAsRead(id: number) {
-    const token = localStorage.getItem("eldercare_access_token");
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/notifications/${id}`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ is_read: true }),
-    });
-
-    if (response.ok) {
+    try {
+      await apiFetch(`/api/notifications/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ is_read: true }),
+      });
       setItems((current) => current.map((item) => (item.id === id ? { ...item, is_read: true } : item)));
+    } catch {
+      // leave the item as unread in the UI if the update failed
     }
   }
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Leaf, Mail, Lock, Eye, EyeOff, Users, HeartHandshake, ShieldCheck } from "lucide-react";
+import { setTokens } from "@/lib/api";
 
 const demoAccounts = [
   {
@@ -68,8 +69,7 @@ export default function LoginPage() {
         throw new Error(data?.detail ?? "เข้าสู่ระบบไม่สำเร็จ");
       }
 
-      localStorage.setItem("eldercare_access_token", data.access_token);
-      localStorage.setItem("eldercare_token_type", data.token_type ?? "bearer");
+      setTokens(data.access_token, data.refresh_token);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "เข้าสู่ระบบไม่สำเร็จ");

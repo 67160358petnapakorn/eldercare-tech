@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api", tags=["Reviews"])
 
 
 def can_access_review(current_user: User, booking: Booking, db: Session) -> bool:
-    if current_user.role == "admin":
+    if current_user.role in {"admin", "nurse"}:
         return True
     if current_user.role == "family":
         from app.models.elder import Elder

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.permissions import can_access_elder
 from app.core.security import get_current_user
 from app.models.elder import Elder
 from app.models.partner import Partner
@@ -10,17 +11,6 @@ from app.models.user import User
 from app.schemas.referral import ReferralCreateRequest, ReferralResponse, ReferralUpdateRequest, PaginatedReferralsResponse
 
 router = APIRouter(prefix="/api", tags=["Referrals"])
-
-
-def can_access_elder(current_user: User, elder_id: int, db: Session) -> bool:
-    elder = db.query(Elder).filter(Elder.id == elder_id).first()
-    if not elder:
-        return False
-    if current_user.role == "admin":
-        return True
-    if current_user.role == "family" and elder.user_id == current_user.id:
-        return True
-    return False
 
 
 @router.get("/referrals", response_model=PaginatedReferralsResponse)
@@ -38,6 +28,15 @@ def list_referrals(
         query = query.filter(Referral.elder_id == elder_id)
     elif current_user.role == "family":
         elder_ids = [e.id for e in db.query(Elder).filter(Elder.user_id == current_user.id).all()]
+        query = query.filter(Referral.elder_id.in_(elder_ids)) if elder_ids else query.filter(False)
+    elif current_user.role == "caregiver":
+        from app.models.booking import Booking
+        from app.models.caregiver import Caregiver
+
+        caregiver = db.query(Caregiver).filter(Caregiver.user_id == current_user.id).first()
+        if not caregiver:
+            return {"items": [], "total": 0, "page": page, "size": size}
+        elder_ids = [b.elder_id for b in db.query(Booking).filter(Booking.caregiver_id == caregiver.id).all()]
         query = query.filter(Referral.elder_id.in_(elder_ids)) if elder_ids else query.filter(False)
     elif current_user.role not in {"admin", "partner", "nurse"}:
         query = query.filter(False)

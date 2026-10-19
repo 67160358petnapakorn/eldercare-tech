@@ -3,25 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Activity, HeartPulse, Thermometer, Droplets } from "lucide-react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-
-async function fetchWithToken(path: string) {
-  const token = localStorage.getItem("eldercare_access_token");
-  if (!token) throw new Error("missing-token");
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("fetch-failed");
-  }
-
-  return response.json();
-}
+import { apiFetch as fetchWithToken } from "@/lib/api";
 
 export default function HealthPage() {
   const router = useRouter();

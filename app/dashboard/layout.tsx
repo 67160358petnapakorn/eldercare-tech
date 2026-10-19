@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+import { apiFetch, getAccessToken, logoutRequest } from "@/lib/api";
 
 export default function DashboardLayout({
   children,
@@ -22,25 +21,14 @@ export default function DashboardLayout({
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    const token = localStorage.getItem("eldercare_access_token");
-    if (!token) {
+    if (!getAccessToken()) {
       router.replace("/login");
       return;
     }
 
     async function loadUser() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Unauthorized");
-        }
-
-        const data = await response.json();
+        const data = await apiFetch("/api/auth/me");
         const firstName = data.first_name || data.username || "ผู้ใช้งาน";
         setUser({
           firstName,
@@ -48,32 +36,18 @@ export default function DashboardLayout({
           avatar: data.role === "admin" ? "🛡️" : data.role === "caregiver" ? "👩‍⚕️" : "🧑",
         });
       } catch {
-        localStorage.removeItem("eldercare_access_token");
-        localStorage.removeItem("eldercare_token_type");
-        router.replace("/login");
+        // apiFetch already clears tokens and redirects to /login on auth failure
         return;
       }
 
       try {
-        const [summaryRes, notificationsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/dashboard/summary`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_BASE_URL}/api/notifications?size=50`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+        const [summary, notifications] = await Promise.all([
+          apiFetch("/api/dashboard/summary"),
+          apiFetch("/api/notifications?size=50"),
         ]);
-
-        if (summaryRes.ok) {
-          const summary = await summaryRes.json();
-          setCareItemCount(summary?.counts?.elders ?? 0);
-        }
-
-        if (notificationsRes.ok) {
-          const notifications = await notificationsRes.json();
-          const unread = (notifications?.items ?? []).filter((n: { is_read: boolean }) => !n.is_read).length;
-          setUnreadCount(unread);
-        }
+        setCareItemCount(summary?.counts?.elders ?? 0);
+        const unread = (notifications?.items ?? []).filter((n: { is_read: boolean }) => !n.is_read).length;
+        setUnreadCount(unread);
       } catch {
         // dashboard chrome degrades gracefully without summary/notification counts
       }
@@ -82,9 +56,8 @@ export default function DashboardLayout({
     loadUser();
   }, [router]);
 
-  function handleLogout() {
-    localStorage.removeItem("eldercare_access_token");
-    localStorage.removeItem("eldercare_token_type");
+  async function handleLogout() {
+    await logoutRequest();
     router.replace("/login");
   }
 

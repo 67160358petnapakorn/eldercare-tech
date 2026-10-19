@@ -29,7 +29,10 @@ class RegisterRequest(BaseModel):
     @field_validator("role")
     @classmethod
     def validate_role(cls, value: str) -> str:
-        allowed_roles = {"family", "elder", "caregiver", "nurse", "partner", "admin"}
+        # Self-registration must never be able to grant "admin" or "partner" —
+        # those accounts are provisioned by an existing admin instead. Only
+        # the roles actually offered on the public /register form are valid.
+        allowed_roles = {"family", "caregiver", "nurse"}
         if value not in allowed_roles:
             raise ValueError("invalid role")
         return value
@@ -58,7 +61,16 @@ class ChangePasswordRequest(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: str | None = None
 
 
 class UserResponse(BaseModel):

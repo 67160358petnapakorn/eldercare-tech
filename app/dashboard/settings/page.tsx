@@ -3,28 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LockKeyhole, ShieldCheck, UserRound } from "lucide-react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-
-async function fetchWithToken(path: string, init?: RequestInit) {
-  const token = localStorage.getItem("eldercare_access_token");
-  if (!token) throw new Error("missing-token");
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      ...(init?.headers ?? {}),
-      Authorization: `Bearer ${token}`,
-      ...(init?.method && init.method !== "GET" ? { "Content-Type": "application/json" } : {}),
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("request-failed");
-  }
-
-  return response.json();
-}
+import { apiFetch } from "@/lib/api";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -41,7 +20,7 @@ export default function SettingsPage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const data = await fetchWithToken("/api/auth/me");
+        const data = await apiFetch("/api/auth/me");
         setProfile(data);
       } catch {
         router.replace("/login");
@@ -69,22 +48,13 @@ export default function SettingsPage() {
 
     try {
       setSubmitting(true);
-      const response = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+      await apiFetch("/api/auth/change-password", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("eldercare_access_token")}`,
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           current_password: form.currentPassword,
           new_password: form.newPassword,
         }),
       });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data?.detail ?? "เปลี่ยนรหัสผ่านไม่สำเร็จ");
-      }
 
       setStatus({ type: "success", message: "เปลี่ยนรหัสผ่านสำเร็จ" });
       setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });

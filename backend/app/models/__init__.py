@@ -1,4 +1,5 @@
 from app.models.user import User
+from app.models.refresh_token import RefreshToken
 from app.models.elder import Elder
 from app.models.caregiver import Caregiver, CaregiverDocument, CaregiverSkill
 from app.models.booking import Booking

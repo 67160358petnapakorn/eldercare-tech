@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarClock, Hospital, Stethoscope, Plus, Trash2, Loader2, Edit2, Save, X } from "lucide-react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+import { apiFetch as fetchWithToken } from "@/lib/api";
 
 const emptyForm = {
   elder_id: 1,
@@ -17,26 +16,6 @@ const emptyForm = {
   note: "",
   status: "upcoming",
 };
-
-async function fetchWithToken(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem("eldercare_access_token");
-  if (!token) throw new Error("missing-token");
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      ...(options.headers ?? {}),
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    const errorPayload = await response.json().catch(() => ({}));
-    throw Object.assign(new Error(errorPayload?.detail ?? "fetch-failed"), { status: response.status });
-  }
-
-  return response.json().catch(() => ({}));
-}
 
 export default function AppointmentsPage() {
   const router = useRouter();

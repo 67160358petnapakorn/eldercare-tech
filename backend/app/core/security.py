@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -31,6 +33,18 @@ def create_access_token(subject: str | int, expires_delta: timedelta | None = No
     to_encode: dict[str, Any] = {"sub": str(subject), "exp": expire}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
+
+
+def hash_refresh_token(raw_token: str) -> str:
+    return hashlib.sha256(raw_token.encode()).hexdigest()
+
+
+def create_refresh_token() -> tuple[str, str, datetime]:
+    """Returns (raw_token, token_hash, expires_at). Only the hash is persisted;
+    the raw token is handed to the client once and can't be recovered from the DB."""
+    raw_token = secrets.token_urlsafe(48)
+    expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    return raw_token, hash_refresh_token(raw_token), expires_at
 
 
 def get_current_user(
