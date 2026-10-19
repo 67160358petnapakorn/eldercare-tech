@@ -243,6 +243,33 @@ def seed_demo_data() -> None:
                 )
             )
 
+        now = datetime.utcnow()
+        db.add_all(
+            [
+                Message(
+                    sender_id=family.id,
+                    recipient_id=caregiver.id,
+                    content="สวัสดีค่ะ พรุ่งนี้สะดวกมาดูแลคุณแม่ตามเวลาเดิมไหมคะ",
+                    is_read=True,
+                    created_at=now - timedelta(hours=3),
+                ),
+                Message(
+                    sender_id=caregiver.id,
+                    recipient_id=family.id,
+                    content="สะดวกค่ะ จะไปถึงประมาณ 9 โมงเช้าตามเดิมนะคะ",
+                    is_read=True,
+                    created_at=now - timedelta(hours=2, minutes=50),
+                ),
+                Message(
+                    sender_id=family.id,
+                    recipient_id=caregiver.id,
+                    content="ขอบคุณค่ะ วันนี้คุณแม่ทานยาความดันตามเวลาไหมคะ",
+                    is_read=False,
+                    created_at=now - timedelta(minutes=20),
+                ),
+            ]
+        )
+
         db.commit()
     finally:
         db.close()
