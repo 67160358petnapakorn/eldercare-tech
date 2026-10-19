@@ -41,7 +41,7 @@ const careLinks = [
 
 const otherLinks = [
   { href: "/dashboard/notifications", label: "การแจ้งเตือน", icon: Bell },
-  { href: "/dashboard/users", label: "ผู้ใช้งาน", icon: ShieldCheck },
+  { href: "/dashboard/users", label: "ผู้ใช้งาน", icon: ShieldCheck, adminOnly: true },
   { href: "/dashboard/messages", label: "ข้อความ", icon: MessageCircle },
   { href: "/dashboard/settings", label: "ตั้งค่า", icon: Settings },
 ];
@@ -81,36 +81,9 @@ function NavGroup({
   );
 }
 
-function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
-  return (
-    <div className="flex h-full flex-col">
-      <Link
-        href="/"
-        className="flex items-center gap-2 px-3 py-2 text-lg font-bold text-brand-blue"
-      >
-        <Leaf size={22} className="text-brand-green" aria-hidden="true" />
-        Eldercare Tech
-      </Link>
-
-      <nav className="mt-6 flex flex-1 flex-col gap-6 overflow-y-auto">
-        <NavGroup label="Overview" links={overviewLinks} onNavigate={onNavigate} />
-        <NavGroup label="Care" links={careLinks} onNavigate={onNavigate} />
-        <NavGroup label="Other" links={otherLinks} onNavigate={onNavigate} />
-      </nav>
-
-      <Link
-        href="/login"
-        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[0.95rem] font-medium text-status-red hover:bg-status-red-bg"
-      >
-        <LogOut size={19} aria-hidden="true" />
-        ออกจากระบบ
-      </Link>
-    </div>
-  );
-}
-
-export default function Sidebar({ onLogout }: { onLogout?: () => void }) {
+export default function Sidebar({ onLogout, role }: { onLogout?: () => void; role?: string }) {
   const [open, setOpen] = useState(false);
+  const visibleOtherLinks = otherLinks.filter((link) => !link.adminOnly || role?.toLowerCase() === "admin");
 
   const handleLogoutClick = () => {
     onLogout?.();
@@ -131,7 +104,7 @@ export default function Sidebar({ onLogout }: { onLogout?: () => void }) {
         <nav className="mt-6 flex flex-1 flex-col gap-6 overflow-y-auto">
           <NavGroup label="Overview" links={overviewLinks} onNavigate={onNavigate} />
           <NavGroup label="Care" links={careLinks} onNavigate={onNavigate} />
-          <NavGroup label="Other" links={otherLinks} onNavigate={onNavigate} />
+          <NavGroup label="Other" links={visibleOtherLinks} onNavigate={onNavigate} />
         </nav>
 
         <button

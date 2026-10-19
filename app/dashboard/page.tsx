@@ -2,20 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Clock, LogOut } from "lucide-react";
 import DashboardCard from "@/components/DashboardCard";
 import HealthCard from "@/components/HealthCard";
 import HealthChart from "@/components/HealthChart";
-import MedicationCard from "@/components/MedicationCard";
-import AppointmentCard from "@/components/AppointmentCard";
-import CaregiverCard from "@/components/CaregiverCard";
-import HealthAlert from "@/components/HealthAlert";
+import MedicationCard, { type MedicationItem } from "@/components/MedicationCard";
+import AppointmentCard, { type AppointmentItem } from "@/components/AppointmentCard";
+import CaregiverCard, { type CaregiverItem } from "@/components/CaregiverCard";
+import HealthAlert, { type AlertItem } from "@/components/HealthAlert";
 import StatusBadge from "@/components/StatusBadge";
-import { elder as fallbackElder, healthStats as fallbackHealthStats, type StatusLevel } from "@/data/mockData";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+import { elder as fallbackElder, type StatusLevel } from "@/data/mockData";
+import { apiFetch, logoutRequest } from "@/lib/api";
 
 type DashboardElder = {
+  id: number | null;
   name: string;
   age: number;
   relation: string;
@@ -42,7 +43,7 @@ function computeAge(dateValue?: string | null): number {
 }
 
 function buildHealthStats(record: any) {
-  const stats = [
+  return [
     {
       id: "heart-rate",
       title: "อัตราการเต้นหัวใจ",
@@ -80,8 +81,6 @@ function buildHealthStats(record: any) {
       icon: "droplets" as const,
     },
   ];
-
-  return stats;
 }
 
 export default function DashboardPage() {
@@ -89,6 +88,7 @@ export default function DashboardPage() {
   const [ready, setReady] = useState(false);
   const [userName, setUserName] = useState("ผู้ใช้งาน");
   const [elderProfile, setElderProfile] = useState<DashboardElder>({
+    id: null,
     name: fallbackElder.name,
     age: fallbackElder.age,
     relation: fallbackElder.relation,
@@ -97,98 +97,107 @@ export default function DashboardPage() {
     status: fallbackElder.status,
     lastUpdated: fallbackElder.lastUpdated,
   });
-  const [healthSummary, setHealthSummary] = useState(fallbackHealthStats);
+  const [healthSummary, setHealthSummary] = useState(buildHealthStats(null));
+  const [medications, setMedications] = useState<MedicationItem[]>([]);
+  const [appointment, setAppointment] = useState<AppointmentItem | null>(null);
+  const [caregiver, setCaregiver] = useState<CaregiverItem | null>(null);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
 
   useEffect(() => {
-    const token = localStorage.getItem("eldercare_access_token");
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
-
     async function loadDashboardData() {
       try {
-        const authResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!authResponse.ok) {
-          throw new Error("Unauthorized");
-        }
-
-        const authData = await authResponse.json();
+        const authData = await apiFetch("/api/auth/me");
         const fullName = [authData.first_name, authData.last_name].filter(Boolean).join(" ") || authData.username || "ผู้ใช้งาน";
         setUserName(fullName);
 
-        const summaryResponse = await fetch(`${API_BASE_URL}/api/dashboard/summary`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const [summaryData, elderData] = await Promise.all([
+          apiFetch("/api/dashboard/summary").catch(() => null),
+          apiFetch("/api/elders").catch(() => null),
+        ]);
 
-        if (summaryResponse.ok) {
-          const summaryData = await summaryResponse.json();
-          const latestRecord = summaryData?.latest_health_record ?? null;
-
-          if (latestRecord) {
-            setHealthSummary(buildHealthStats(latestRecord));
-            setElderProfile((prev) => ({
-              ...prev,
-              statusLabel: "สุขภาพคงที่",
-              status: "normal",
-              lastUpdated: latestRecord.created_at ? new Date(latestRecord.created_at).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }) : prev.lastUpdated,
-            }));
-          }
+        const latestFromSummary = summaryData?.latest_health_record ?? null;
+        if (latestFromSummary) {
+          setHealthSummary(buildHealthStats(latestFromSummary));
         }
 
-        const elderResponse = await fetch(`${API_BASE_URL}/api/elders`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (elderResponse.ok) {
-          const elderData = await elderResponse.json();
-          const elderItem = elderData?.items?.[0] ?? null;
-
-          if (elderItem) {
-            setElderProfile({
-              name: `${elderItem.first_name} ${elderItem.last_name}`,
-              age: computeAge(elderItem.date_of_birth),
-              relation: elderItem.relationship_type ?? "ผู้สูงอายุ",
-              avatar: elderItem.gender === "male" ? "👴" : "👵",
-              statusLabel: "สุขภาพคงที่",
-              status: "normal",
-              lastUpdated: elderItem.updated_at ? new Date(elderItem.updated_at).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }) : "เมื่อสักครู่",
-            });
-          }
+        const elderItem = elderData?.items?.[0] ?? null;
+        let elderId: number | null = null;
+        if (elderItem) {
+          elderId = elderItem.id;
+          setElderProfile({
+            id: elderItem.id,
+            name: `${elderItem.first_name} ${elderItem.last_name}`,
+            age: computeAge(elderItem.date_of_birth),
+            relation: elderItem.relationship_type ?? "ผู้สูงอายุ",
+            avatar: elderItem.gender === "male" ? "👴" : "👵",
+            statusLabel: "สุขภาพคงที่",
+            status: "normal",
+            lastUpdated: elderItem.updated_at
+              ? new Date(elderItem.updated_at).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })
+              : "เมื่อสักครู่",
+          });
         }
 
-        const healthResponse = await fetch(`${API_BASE_URL}/api/health-records`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        if (elderId) {
+          const [healthData, medsData, apptData, bookingData, alertsData] = await Promise.all([
+            apiFetch(`/api/health-records?elder_id=${elderId}&size=1`).catch(() => null),
+            apiFetch(`/api/medications?elder_id=${elderId}&size=3`).catch(() => null),
+            apiFetch(`/api/appointments?elder_id=${elderId}&size=5`).catch(() => null),
+            apiFetch(`/api/bookings?elder_id=${elderId}&size=1`).catch(() => null),
+            apiFetch(`/api/health-alerts?elder_id=${elderId}&size=3`).catch(() => null),
+          ]);
 
-        if (healthResponse.ok) {
-          const healthData = await healthResponse.json();
           const latestRecord = healthData?.items?.[0] ?? null;
-
           if (latestRecord) {
             setHealthSummary(buildHealthStats(latestRecord));
             setElderProfile((prev) => ({
               ...prev,
-              statusLabel: "สุขภาพคงที่",
-              status: "normal",
-              lastUpdated: latestRecord.created_at ? new Date(latestRecord.created_at).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }) : prev.lastUpdated,
+              lastUpdated: latestRecord.created_at
+                ? new Date(latestRecord.created_at).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })
+                : prev.lastUpdated,
             }));
           }
+
+          setMedications(
+            (medsData?.items ?? []).map((m: any) => ({
+              id: m.id,
+              name: m.name,
+              dosage: m.dosage,
+              time: m.time,
+              frequency: m.frequency,
+            }))
+          );
+
+          const upcomingAppointments = (apptData?.items ?? [])
+            .filter((a: any) => a.appointment_date >= new Date().toISOString().slice(0, 10))
+            .sort((a: any, b: any) => a.appointment_date.localeCompare(b.appointment_date));
+          setAppointment(upcomingAppointments[0] ?? apptData?.items?.[0] ?? null);
+
+          const latestBooking = bookingData?.items?.[0] ?? null;
+          if (latestBooking?.caregiver_id) {
+            const caregiverData = await apiFetch(`/api/caregivers/${latestBooking.caregiver_id}`).catch(() => null);
+            if (caregiverData) {
+              setCaregiver({
+                id: caregiverData.id,
+                name: caregiverData.name,
+                rating: caregiverData.rating,
+                experience: caregiverData.experience,
+                hourly_rate: caregiverData.hourly_rate,
+                verified: caregiverData.verified,
+              });
+            }
+          }
+
+          setAlerts(
+            (alertsData?.items ?? []).map((a: any) => ({
+              id: a.id,
+              title: a.title,
+              message: a.message,
+              severity: a.severity,
+            }))
+          );
         }
       } catch {
-        localStorage.removeItem("eldercare_access_token");
-        localStorage.removeItem("eldercare_token_type");
         router.replace("/login");
         return;
       }
@@ -199,9 +208,8 @@ export default function DashboardPage() {
     loadDashboardData();
   }, [router]);
 
-  function handleLogout() {
-    localStorage.removeItem("eldercare_access_token");
-    localStorage.removeItem("eldercare_token_type");
+  async function handleLogout() {
+    await logoutRequest();
     router.replace("/login");
   }
 
@@ -233,7 +241,9 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <button className="btn-primary w-full sm:w-auto">ดูข้อมูลสุขภาพ</button>
+            <Link href="/dashboard/health" className="btn-primary w-full text-center sm:w-auto">
+              ดูข้อมูลสุขภาพ
+            </Link>
             <button
               type="button"
               onClick={handleLogout}
@@ -266,13 +276,13 @@ export default function DashboardPage() {
       <HealthChart />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <MedicationCard />
-        <AppointmentCard />
+        <MedicationCard items={medications} />
+        <AppointmentCard appointment={appointment} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <CaregiverCard />
-        <HealthAlert />
+        <CaregiverCard caregiver={caregiver} />
+        <HealthAlert items={alerts} />
       </div>
     </div>
   );

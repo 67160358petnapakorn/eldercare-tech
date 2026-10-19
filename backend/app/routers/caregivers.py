@@ -16,6 +16,17 @@ from app.schemas.caregiver import (
 router = APIRouter(prefix="/api", tags=["Caregivers"])
 
 
+def _visible_caregiver(current_user: User, caregiver: Caregiver) -> CaregiverResponse:
+    """Caregiver profiles are a browsable directory (family needs to find
+    and book one), so anyone authenticated can view the public fields —
+    but verification documents (ID/certificate file URLs) are only for
+    admin/nurse or the caregiver themselves."""
+    data = CaregiverResponse.model_validate(caregiver)
+    if current_user.role not in {"admin", "nurse"} and caregiver.user_id != current_user.id:
+        data.documents = []
+    return data
+
+
 @router.get("/caregivers", response_model=PaginatedCaregiversResponse)
 def list_caregivers(
     page: int = Query(1, ge=1),
@@ -25,9 +36,6 @@ def list_caregivers(
     db: Session = Depends(get_db),
 ):
     query = db.query(Caregiver)
-
-    if current_user.role not in {"admin", "nurse"}:
-        query = query.filter(Caregiver.user_id == current_user.id)
 
     if search:
         term = f"%{search}%"
@@ -41,7 +49,7 @@ def list_caregivers(
 
     total = query.count()
     items = query.order_by(Caregiver.id.asc()).offset((page - 1) * size).limit(size).all()
-    return {"items": items, "total": total, "page": page, "size": size}
+    return {"items": [_visible_caregiver(current_user, c) for c in items], "total": total, "page": page, "size": size}
 
 
 @router.post("/caregivers", response_model=CaregiverResponse, status_code=status.HTTP_201_CREATED)
@@ -88,13 +96,7 @@ def get_caregiver(
     if not caregiver:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="caregiver not found")
 
-    if current_user.role not in {"admin", "nurse"} and caregiver.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to access this caregiver",
-        )
-
-    return caregiver
+    return _visible_caregiver(current_user, caregiver)
 
 
 @router.patch("/caregivers/{caregiver_id}", response_model=CaregiverResponse)

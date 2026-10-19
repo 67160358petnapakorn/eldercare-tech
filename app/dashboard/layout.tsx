@@ -63,7 +63,7 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-surface-soft">
-      <Sidebar onLogout={handleLogout} />
+      <Sidebar onLogout={handleLogout} role={user.role} />
 
       <div className="flex min-h-screen flex-1 flex-col">
         <header className="sticky top-0 z-30 border-b border-surface-line bg-white/90 px-5 py-4 backdrop-blur sm:px-8">
