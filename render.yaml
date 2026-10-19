@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: eldercare-tech-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+      - key: PROMPTPAY_ID
+        value: "0812345678"
+      - key: DATABASE_URL
+        value: sqlite:////app/eldercare.db

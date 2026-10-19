@@ -12,6 +12,11 @@ Authentication ที่มี refresh token + RBAC ต่อ endpoint, Real-tim
 [`docs/microservices-architecture.md`](docs/microservices-architecture.md)
 และ [`docs/technology-stack.md`](docs/technology-stack.md)
 
+**Deploy ขึ้น production**: ดู [`docs/deployment.md`](docs/deployment.md)
+— ตอนนี้ Vercel deploy เฉพาะ frontend อัตโนมัติ **backend ยังไม่ได้
+deploy** ทำให้เว็บที่ deploy แล้วขึ้น "Failed to fetch" ตอน login
+จนกว่าจะทำตามขั้นตอนใน doc นี้
+
 ## Tech Stack
 
 **Frontend**
