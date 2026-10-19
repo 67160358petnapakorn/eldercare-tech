@@ -27,11 +27,14 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     # Local dev frontends can land on any port (Next.js auto-increments
-    # when 3000 is busy) and on localhost/127.0.0.1/0.0.0.0 — a fixed
-    # allow_origins list silently 400s the CORS preflight the moment the
-    # frontend isn't on exactly :3000, which surfaces in the browser as
-    # a generic "Failed to fetch". Match any local dev origin instead.
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|0\.0\.0\.0):\d+",
+    # when 3000 is busy) and on localhost/127.0.0.1/0.0.0.0, PLUS the
+    # Vercel-hosted frontend (production + any preview deployment, which
+    # Vercel names like eldercare-tech-<hash>.vercel.app or
+    # eldercare-tech-git-<branch>-<user>.vercel.app) — a fixed allow_origins
+    # list silently 400s the CORS preflight the moment the origin isn't an
+    # exact match, which surfaces in the browser as a generic
+    # "Failed to fetch". Match any of these origins instead.
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|0\.0\.0\.0):\d+|https://eldercare-tech(-[a-z0-9-]+)?\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
