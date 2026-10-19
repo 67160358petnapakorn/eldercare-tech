@@ -3,9 +3,10 @@
 แพลตฟอร์มดูแลผู้สูงอายุ — **“ดูแลคนที่คุณรัก แม้อยู่ไกลกัน”**
 
 Phase 2 เชื่อม **Backend API จริงแล้ว** (FastAPI + SQLAlchemy + JWT
-Authentication) ทุกหน้าของ dashboard เรียกข้อมูลจาก API แทน mock data
-เดิม ยังไม่มี Payment / Real-time chat (WebSocket) / IoT / Hospital API
-— ดูหัวข้อ [Not in Phase 2](#not-in-phase-2)
+Authentication ที่มี refresh token + RBAC ต่อ endpoint, Real-time chat
+ผ่าน WebSocket) ทุกหน้าของ dashboard เรียกข้อมูลจาก API แทน mock data
+เดิม ยังไม่มี Payment / IoT / Hospital API — ดูหัวข้อ
+[Not in Phase 2](#not-in-phase-2)
 
 สถาปัตยกรรมและ technology stack ของโปรเจคอยู่ที่
 [`docs/microservices-architecture.md`](docs/microservices-architecture.md)
@@ -25,7 +26,8 @@ Authentication) ทุกหน้าของ dashboard เรียกข้�
 - FastAPI + Uvicorn (ASGI server)
 - SQLAlchemy 2.0 (ORM)
 - Pydantic v2 (schema validation)
-- python-jose (JWT) + passlib/bcrypt (password hashing)
+- python-jose (JWT, access + rotating single-use refresh tokens) + passlib/bcrypt (password hashing)
+- FastAPI WebSocket (real-time chat, `/api/ws/messages`)
 - SQLite (local dev) / MySQL 8.0 (production, ผ่าน Docker)
 
 **Infra / Testing**
@@ -55,10 +57,10 @@ eldercare-tech/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py                   # FastAPI entrypoint + CORS
-│   │   ├── core/                     # config, database, security, init_db (seed data)
-│   │   ├── models/                   # SQLAlchemy models (12 domains)
+│   │   ├── core/                     # config, database, security, permissions, init_db (seed data)
+│   │   ├── models/                   # SQLAlchemy models (13 domains + refresh tokens)
 │   │   ├── schemas/                  # Pydantic schemas
-│   │   └── routers/                  # API routers (auth, users, elders, ...)
+│   │   └── routers/                  # API routers (auth, users, elders, messages (+ WebSocket), ...)
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── docs/
@@ -145,6 +147,11 @@ access token กลับมาเก็บใน `localStorage`
 - [x] ทุกหน้า dashboard (elders, caregivers, bookings, health,
       medications, appointments, partners, referrals, reviews,
       notifications, users, settings) ดึงข้อมูลจาก backend จริง
+- [x] หน้า "ข้อความ" เป็น real-time chat จริงผ่าน WebSocket (ไม่ใช่
+      placeholder แล้ว) — ส่ง/รับข้อความสดโดยไม่ต้อง refresh
+- [x] RBAC ต่อ endpoint (family/caregiver/nurse/admin เห็น/แก้ข้อมูล
+      ตามสิทธิ์จริง ไม่ใช่แค่ login แล้วเข้าถึงได้หมด)
+- [x] Refresh token หมุนเวียนอัตโนมัติ ไม่ต้อง login ใหม่บ่อยๆ
 - [x] Health Cards + Chart แสดงผล (วันนี้ / 7 วัน / 30 วัน)
 - [x] Responsive (Desktop / Tablet / Mobile)
 - [x] ไม่มี Console Error
@@ -154,8 +161,8 @@ access token กลับมาเก็บใน `localStorage`
 
 ## Not in Phase 2
 
-❌ Payment · ❌ Real-time chat (WebSocket) · ❌ IoT device sync ·
-❌ Hospital API integration · ❌ Refresh token / RBAC ระดับ endpoint
+❌ Payment · ❌ IoT device sync · ❌ Hospital API integration
 
-หน้า "ข้อความ" (`/dashboard/messages`) ปัจจุบันยังใช้ Notification API
-เป็น placeholder ไม่ใช่ real-time chat จริง
+WebSocket chat ใช้ in-memory connection registry ต่อ process เดียว —
+รองรับ local/dev ได้สบาย แต่ถ้า deploy จริงแบบหลาย worker ต้องมี
+pub/sub (เช่น Redis) มาช่วยกระจายข้อความข้าม process
