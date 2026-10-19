@@ -24,14 +24,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-        "http://localhost:3002",
-        "http://127.0.0.1:3002",
-    ],
+    # Local dev frontends can land on any port (Next.js auto-increments
+    # when 3000 is busy) and on localhost/127.0.0.1/0.0.0.0 — a fixed
+    # allow_origins list silently 400s the CORS preflight the moment the
+    # frontend isn't on exactly :3000, which surfaces in the browser as
+    # a generic "Failed to fetch". Match any local dev origin instead.
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|0\.0\.0\.0):\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
