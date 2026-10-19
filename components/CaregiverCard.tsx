@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BadgeCheck, Star, Wallet } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 import DashboardCard from "./DashboardCard";
 
 export type CaregiverItem = {
@@ -9,6 +10,7 @@ export type CaregiverItem = {
   experience: number;
   hourly_rate: number;
   verified: boolean;
+  photo_url?: string | null;
 };
 
 export default function CaregiverCard({ caregiver }: { caregiver: CaregiverItem | null }) {
@@ -20,11 +22,15 @@ export default function CaregiverCard({ caregiver }: { caregiver: CaregiverItem 
         </p>
       ) : (
         <div className="flex items-center gap-4">
-          <div
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-green-light text-2xl"
-            aria-hidden="true"
-          >
-            🧑‍⚕️
+          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full">
+            {caregiver.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={`${API_BASE_URL}${caregiver.photo_url}`} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-brand-green-light text-2xl" aria-hidden="true">
+                🧑‍⚕️
+              </div>
+            )}
           </div>
           <div>
             <div className="flex items-center gap-1.5">

@@ -31,6 +31,7 @@ class CaregiverCreateRequest(BaseModel):
     location: str | None = None
     hourly_rate: float = 0.0
     bio: str | None = None
+    photo_url: str | None = None
     rating: float = 0.0
     verified: bool = False
     skills: list[str] = []
@@ -60,6 +61,7 @@ class CaregiverUpdateRequest(BaseModel):
     location: str | None = None
     hourly_rate: float | None = None
     bio: str | None = None
+    photo_url: str | None = None
     rating: float | None = None
     verified: bool | None = None
     skills: list[str] | None = None
@@ -85,6 +87,7 @@ class CaregiverResponse(BaseModel):
     location: str | None = None
     hourly_rate: float
     bio: str | None = None
+    photo_url: str | None = None
     rating: float
     verified: bool
     created_at: datetime | None = None

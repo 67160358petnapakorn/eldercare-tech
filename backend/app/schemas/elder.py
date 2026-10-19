@@ -14,6 +14,7 @@ class ElderCreateRequest(BaseModel):
     emergency_contact: str | None = None
     relationship_type: str | None = None
     medical_note: str | None = None
+    photo_url: str | None = None
 
     @field_validator("first_name")
     @classmethod
@@ -35,6 +36,7 @@ class ElderUpdateRequest(BaseModel):
     emergency_contact: str | None = None
     relationship_type: str | None = None
     medical_note: str | None = None
+    photo_url: str | None = None
 
 
 class ElderResponse(BaseModel):
@@ -51,6 +53,7 @@ class ElderResponse(BaseModel):
     emergency_contact: str | None = None
     relationship_type: str | None = None
     medical_note: str | None = None
+    photo_url: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 

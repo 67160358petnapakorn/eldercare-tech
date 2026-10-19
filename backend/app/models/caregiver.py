@@ -17,6 +17,7 @@ class Caregiver(Base):
     location = Column(String(120), nullable=True)
     hourly_rate = Column(Float, default=0.0)
     bio = Column(Text, nullable=True)
+    photo_url = Column(String(255), nullable=True)
     rating = Column(Float, default=0.0)
     verified = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

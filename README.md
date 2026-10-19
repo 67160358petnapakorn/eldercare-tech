@@ -39,6 +39,7 @@ deploy** ทำให้เว็บที่ deploy แล้วขึ้น "F
 **Infra / Testing**
 - Docker + docker-compose (backend API + MySQL)
 - Playwright (E2E test)
+- pytest + httpx (backend unit/integration test, `backend/tests/`)
 
 ## Folder Structure
 
@@ -131,6 +132,21 @@ docker compose up --build
 จะรัน FastAPI (port 8000) + MySQL 8.0 (port 3306) ให้ แล้วค่อยรัน
 `npm run dev` แยกสำหรับ frontend ตามปกติ
 
+### 4. Backend unit test (pytest)
+
+```bash
+cd backend
+source .venv/bin/activate
+pip install -r requirements-dev.txt   # pytest + httpx (ครั้งแรกครั้งเดียว)
+pytest
+```
+
+รันกับ SQLite in-memory แยกต่างหาก ไม่แตะฐานข้อมูล dev จริง
+(`backend/eldercare.db`) หรือ MySQL เลย — ครอบคลุม auth (รวม regression
+test ของช่องโหว่ role="admin" ที่เคยเจอ), refresh token rotation,
+permission ต่อ role (`can_access_elder`), RBAC ของ elders/caregivers
+endpoint, payment/PromptPay, และการตรวจสอบไฟล์อัปโหลด
+
 ## Demo Login (บัญชีจริง ผ่าน JWT Authentication)
 
 | Role      | Email                | Password |
@@ -166,11 +182,20 @@ access token กลับมาเก็บใน `localStorage`
       หน้า login/register, header ของ dashboard) จำค่าไว้ใน
       localStorage และตามค่า OS ถ้ายังไม่เคยเลือกเอง
 - [x] Health Cards + Chart แสดงผล (วันนี้ / 7 วัน / 30 วัน)
+- [x] อัปโหลดรูปโปรไฟล์จริงได้ ทั้งผู้สูงอายุ (หน้า "ผู้สูงอายุ") และ
+      ผู้ดูแล (หน้า "ผู้ดูแล" เฉพาะโปรไฟล์ตัวเอง) — เก็บไฟล์จริงที่ backend
+      (`backend/uploads/`) ไม่ใช่ URL ปลอม แสดงผลทันทีทุกจุดที่มีรูป
+      (การ์ด dashboard, รายการผู้ดูแล)
 - [x] Responsive (Desktop / Tablet / Mobile)
 - [x] ไม่มี Console Error
 - [x] Playwright E2E ครอบคลุม login → dashboard → CRUD พื้นฐาน
-- [ ] Backend unit test (pytest) — ยังไม่มี
-- [ ] ทดสอบ deploy จริงกับ MySQL ผ่าน docker-compose
+- [x] Backend unit test (pytest) — 40 tests ครอบคลุม auth/RBAC/refresh
+      token rotation/permissions/payment/upload validation
+      (`cd backend && source .venv/bin/activate && pytest`)
+- [x] ทดสอบ deploy จริงกับ MySQL ผ่าน docker-compose — รันจริงแล้ว
+      (`docker compose up --build`), ยืนยันตาราง + seed data อยู่ใน MySQL
+      จริง (ไม่ใช่ fallback SQLite) และ login/CRUD/อัปโหลดรูปทำงานผ่าน
+      browser จริงกับ backend ที่ต่อ MySQL
 
 ## Not in Phase 2
 

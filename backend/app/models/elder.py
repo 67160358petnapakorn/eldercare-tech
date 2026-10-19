@@ -20,6 +20,7 @@ class Elder(Base):
     emergency_contact = Column(String(20), nullable=True)
     relationship_type = Column(String(50), nullable=True)
     medical_note = Column(Text, nullable=True)
+    photo_url = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

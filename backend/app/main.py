@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.init_db import initialize_database
 from app.routers.auth import router as auth_router
@@ -17,6 +18,7 @@ from app.routers.reviews import router as review_router
 from app.routers.notifications import router as notification_router
 from app.routers.messages import router as message_router
 from app.routers.payments import router as payment_router
+from app.routers.uploads import router as upload_router, UPLOAD_DIR
 
 app = FastAPI(
     title="Eldercare Tech API",
@@ -61,6 +63,9 @@ app.include_router(review_router)
 app.include_router(notification_router)
 app.include_router(message_router)
 app.include_router(payment_router)
+app.include_router(upload_router)
+
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
 @app.get("/")

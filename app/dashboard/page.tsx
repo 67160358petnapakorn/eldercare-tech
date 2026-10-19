@@ -184,6 +184,7 @@ export default function DashboardPage() {
                 experience: caregiverData.experience,
                 hourly_rate: caregiverData.hourly_rate,
                 verified: caregiverData.verified,
+                photo_url: caregiverData.photo_url,
               });
             }
           }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, MapPin, Phone, Edit2, X, Save } from "lucide-react";
 import { apiFetch as fetchWithToken } from "@/lib/api";
+import PhotoUpload from "@/components/PhotoUpload";
 
 export default function EldersPage() {
   const router = useRouter();
@@ -21,6 +22,21 @@ export default function EldersPage() {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [photoError, setPhotoError] = useState<Record<number, string>>({});
+
+  async function handlePhotoUploaded(elderId: number, url: string) {
+    setPhotoError((current) => ({ ...current, [elderId]: "" }));
+    try {
+      const updated = await fetchWithToken(`/api/elders/${elderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photo_url: url }),
+      });
+      setItems((current) => current.map((it) => (it.id === elderId ? updated : it)));
+    } catch (err: any) {
+      setPhotoError((current) => ({ ...current, [elderId]: err?.message ?? "บันทึกรูปภาพไม่สำเร็จ" }));
+    }
+  }
 
   async function loadElders() {
     try {
@@ -152,9 +168,22 @@ export default function EldersPage() {
           {items.map((elder) => (
             <div key={elder.id} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-brand-blue">ผู้สูงอายุ</p>
-                  <h3 className="mt-2 text-xl font-bold text-ink">{elder.first_name} {elder.last_name}</h3>
+                <div className="flex items-center gap-3">
+                  <PhotoUpload
+                    photoUrl={elder.photo_url}
+                    size={52}
+                    fallback={
+                      <span className="flex h-full w-full items-center justify-center bg-brand-blue-light text-2xl" aria-hidden="true">
+                        {elder.gender === "male" ? "👴" : "👵"}
+                      </span>
+                    }
+                    onUploaded={(url) => handlePhotoUploaded(elder.id, url)}
+                    onError={(message) => setPhotoError((current) => ({ ...current, [elder.id]: message }))}
+                  />
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-brand-blue">ผู้สูงอายุ</p>
+                    <h3 className="mt-1 text-xl font-bold text-ink">{elder.first_name} {elder.last_name}</h3>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button type="button" data-test={"elder-edit-" + elder.id} onClick={() => startEdit(elder)} className="rounded-full p-2 hover:bg-surface-soft" aria-label="แก้ไข">
@@ -162,6 +191,10 @@ export default function EldersPage() {
                   </button>
                 </div>
               </div>
+
+              {photoError[elder.id] ? (
+                <p className="mt-2 text-xs text-status-red">{photoError[elder.id]}</p>
+              ) : null}
 
               <div className="mt-4 space-y-2 text-sm text-ink-soft">
                 <div className="flex items-center gap-2">

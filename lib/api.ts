@@ -112,6 +112,46 @@ export async function apiFetch(path: string, init: RequestInit = {}, allowRetry 
   return response.json().catch(() => ({}));
 }
 
+/** Uploads an image file and returns its URL. Deliberately bypasses
+ * apiFetch's JSON-body assumption — multipart/form-data needs the browser
+ * to set its own Content-Type with a boundary, so we only attach the
+ * Authorization header here. */
+export async function uploadPhoto(file: File): Promise<{ url: string }> {
+  const token = getAccessToken();
+  if (!token) {
+    if (typeof window !== "undefined") window.location.href = "/login";
+    throw new ApiError("missing-token", 401);
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  let response = await fetch(`${API_BASE_URL}/api/uploads/photo`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (response.status === 401) {
+    const refreshed = await tryRefresh(token);
+    if (refreshed) {
+      const retryToken = getAccessToken();
+      response = await fetch(`${API_BASE_URL}/api/uploads/photo`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${retryToken}` },
+        body: formData,
+      });
+    }
+  }
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new ApiError(payload?.detail ?? "upload-failed", response.status);
+  }
+
+  return response.json();
+}
+
 export async function logoutRequest() {
   const refreshToken = getRefreshToken();
   try {
