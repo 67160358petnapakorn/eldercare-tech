@@ -5,8 +5,8 @@
 Phase 2 เชื่อม **Backend API จริงแล้ว** (FastAPI + SQLAlchemy + JWT
 Authentication ที่มี refresh token + RBAC ต่อ endpoint, Real-time chat
 ผ่าน WebSocket, ชำระเงินผ่าน PromptPay QR) ทุกหน้าของ dashboard เรียก
-ข้อมูลจาก API แทน mock data เดิม ยังไม่มี IoT / Hospital API — ดูหัวข้อ
-[Not in Phase 2](#not-in-phase-2)
+ข้อมูลจาก API แทน mock data เดิม รองรับ **Dark mode** ทั้งแอพ ยังไม่มี
+IoT / Hospital API — ดูหัวข้อ [Not in Phase 2](#not-in-phase-2)
 
 สถาปัตยกรรมและ technology stack ของโปรเจคอยู่ที่
 [`docs/microservices-architecture.md`](docs/microservices-architecture.md)
@@ -162,6 +162,9 @@ access token กลับมาเก็บใน `localStorage`
       hourly_rate ของผู้ดูแล × ระยะเวลา สร้าง QR code จริง
       (EMV QR / BOT PromptPay spec) ยืนยันการชำระแบบ demo (ไม่ได้ต่อ
       ธนาคารจริง ไม่มี merchant account)
+- [x] Dark mode / Light mode สลับได้ทั้งแอพ (ปุ่มที่ navbar หน้าแรก,
+      หน้า login/register, header ของ dashboard) จำค่าไว้ใน
+      localStorage และตามค่า OS ถ้ายังไม่เคยเลือกเอง
 - [x] Health Cards + Chart แสดงผล (วันนี้ / 7 วัน / 30 วัน)
 - [x] Responsive (Desktop / Tablet / Mobile)
 - [x] ไม่มี Console Error
