@@ -5,8 +5,12 @@
 Phase 2 เชื่อม **Backend API จริงแล้ว** (FastAPI + SQLAlchemy + JWT
 Authentication ที่มี refresh token + RBAC ต่อ endpoint, Real-time chat
 ผ่าน WebSocket, ชำระเงินผ่าน PromptPay QR) ทุกหน้าของ dashboard เรียก
-ข้อมูลจาก API แทน mock data เดิม รองรับ **Dark mode** ทั้งแอพ ยังไม่มี
-IoT / Hospital API — ดูหัวข้อ [Not in Phase 2](#not-in-phase-2)
+ข้อมูลจาก API แทน mock data เดิม — สมัครสมาชิกแล้วเพิ่ม/แก้/ลบข้อมูล
+ของตัวเองได้ครบทุกหน้า (ผู้สูงอายุ สุขภาพ ยา นัดหมาย การจอง ผู้ดูแล
+Partner Referral Review การแจ้งเตือน) ไม่ต้องพึ่งข้อมูล demo รองรับ
+**Dark mode** ทั้งแอพ และมีหน้านโยบายความเป็นส่วนตัว +
+ดาวน์โหลด/ลบข้อมูลของตัวเองได้ตาม PDPA ยังไม่มี IoT / Hospital API —
+ดูหัวข้อ [Not in Phase 2](#not-in-phase-2)
 
 สถาปัตยกรรมและ technology stack ของโปรเจคอยู่ที่
 [`docs/microservices-architecture.md`](docs/microservices-architecture.md)
@@ -34,7 +38,7 @@ deploy** ทำให้เว็บที่ deploy แล้วขึ้น "F
 - python-jose (JWT, access + rotating single-use refresh tokens) + passlib/bcrypt (password hashing)
 - FastAPI WebSocket (real-time chat, `/api/ws/messages`)
 - `qrcode` + Pillow (PromptPay QR generation — pure-Python, no payment gateway/API key needed)
-- SQLite (local dev) / MySQL 8.0 (production, ผ่าน Docker)
+- SQLite (local dev, default) / MySQL 8.0 (ผ่าน docker-compose) / PostgreSQL (production บน Render) — `DATABASE_URL` เลือกได้ทั้งสามแบบ
 
 **Infra / Testing**
 - Docker + docker-compose (backend API + MySQL)
@@ -48,33 +52,41 @@ eldercare-tech/
 ├── app/
 │   ├── layout.tsx
 │   ├── globals.css
-│   ├── page.tsx                      # Landing page (/)
+│   ├── page.tsx                      # Landing page (/) — real data when logged in
 │   ├── login/page.tsx                # /login — เรียก API จริง
-│   ├── register/page.tsx             # /register — เรียก API จริง
+│   ├── register/page.tsx             # /register — เรียก API จริง, auto-login หลังสมัคร
+│   ├── privacy/page.tsx              # /privacy — นโยบายความเป็นส่วนตัว (PDPA)
 │   └── dashboard/
 │       ├── layout.tsx                # Sidebar + Header + auth guard
-│       ├── page.tsx                  # /dashboard
+│       ├── page.tsx                  # /dashboard — onboarding ถ้ายังไม่มีผู้สูงอายุ
 │       ├── elders/ · caregivers/ · bookings/
 │       ├── health/ · medications/ · appointments/
 │       ├── partners/ · referrals/ · reviews/
 │       ├── notifications/ · messages/
-│       └── users/ · settings/
-├── components/                       # UI components (cards, charts, badges ฯลฯ)
+│       └── users/ · settings/        # settings: เปลี่ยนรหัสผ่าน, export/ลบบัญชี (PDPA)
+├── components/
+│   ├── Modal.tsx                     # modal กลางที่ทุกหน้าใช้ร่วมกันสำหรับฟอร์ม CRUD
+│   ├── PhotoUpload.tsx               # อัปโหลดรูปโปรไฟล์ (ผู้สูงอายุ/ผู้ดูแล)
+│   ├── LandingElderPreview.tsx       # การ์ดตัวอย่าง/ข้อมูลจริงบนหน้าแรก
+│   └── ...                           # cards, charts, badges ฯลฯ
 ├── data/mockData.ts                  # mock data เดิม (ไม่ได้ใช้แล้วในหน้า dashboard)
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                   # FastAPI entrypoint + CORS
-│   │   ├── core/                     # config, database, security, permissions, init_db (seed data)
+│   │   ├── main.py                   # FastAPI entrypoint + CORS (ALLOWED_ORIGINS)
+│   │   ├── core/                     # config (env-based, production guard), database, security, permissions, init_db (seed data)
 │   │   ├── models/                   # SQLAlchemy models (13 domains + refresh tokens)
 │   │   ├── schemas/                  # Pydantic schemas
-│   │   └── routers/                  # API routers (auth, users, elders, messages (+ WebSocket), payments, ...)
+│   │   └── routers/                  # API routers (auth incl. data export/delete, users, elders, messages (+ WebSocket), payments, uploads, ...)
+│   ├── tests/                        # pytest suite
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── docs/
 │   ├── microservices-architecture.md
-│   └── technology-stack.md
+│   ├── technology-stack.md
+│   └── deployment.md                 # Render (backend+Postgres) + Vercel (frontend) steps
 ├── tests/e2e/playwright-e2e.spec.ts
 ├── docker-compose.yml                # api + mysql
+├── render.yaml                       # Render Blueprint: backend + PostgreSQL
 ├── .env.example
 └── README.md
 ```
@@ -147,6 +159,23 @@ test ของช่องโหว่ role="admin" ที่เคยเจอ)
 permission ต่อ role (`can_access_elder`), RBAC ของ elders/caregivers
 endpoint, payment/PromptPay, และการตรวจสอบไฟล์อัปโหลด
 
+## Deploy ขึ้น production
+
+ขั้นตอนละเอียดอยู่ที่ [`docs/deployment.md`](docs/deployment.md) สรุปสั้นๆ:
+
+1. **Backend → Render**: กด New → Blueprint → เลือก repo นี้ Render
+   จะอ่าน [`render.yaml`](render.yaml) แล้วสร้างทั้ง backend service
+   และฐานข้อมูล PostgreSQL ให้อัตโนมัติ (`SECRET_KEY` สุ่มให้เองแบบ
+   ปลอดภัย ไม่ใช้ placeholder)
+2. **Frontend → Vercel**: ตั้ง env var `NEXT_PUBLIC_API_BASE_URL` เป็น
+   URL ของ Render ที่ได้จากข้อ 1 (เช่น
+   `https://eldercare-tech-api.onrender.com`) ที่ Vercel → Settings →
+   Environment Variables แล้ว **Redeploy** (ค่า `NEXT_PUBLIC_*` ถูกฝัง
+   ตอน build ไม่ใช่ runtime — ตั้งค่าเฉยๆ ไม่พอ ต้อง build ใหม่)
+3. **CORS**: ถ้า frontend ใช้โดเมนอื่นนอกจาก
+   `https://eldercare-tech.vercel.app` ให้ตั้ง `ALLOWED_ORIGINS` ที่
+   Render service ให้ตรงกับโดเมนจริง (ดูรายละเอียดใน deployment doc)
+
 ## Demo Login (บัญชีจริง ผ่าน JWT Authentication)
 
 | Role      | Email                | Password |
@@ -168,7 +197,15 @@ access token กลับมาเก็บใน `localStorage`
 - [x] Dashboard มี auth guard (redirect ไป `/login` ถ้าไม่มี token)
 - [x] ทุกหน้า dashboard (elders, caregivers, bookings, health,
       medications, appointments, partners, referrals, reviews,
-      notifications, users, settings) ดึงข้อมูลจาก backend จริง
+      notifications, users, settings) ดึงข้อมูลจาก backend จริง และมี
+      **CRUD ครบ** (เพิ่มผ่าน modal, แก้ไข, ลบพร้อม confirm, loading/empty
+      state, validation) ไม่ใช่แค่แสดงผลอย่างเดียวอีกต่อไป
+- [x] หน้าแรก (`/`) และ dashboard หลัก (`/dashboard`) ใช้ข้อมูลจริงของ
+      ผู้ใช้ที่ login อยู่ — การ์ดตัวอย่างบนหน้าแรกติดป้าย "ตัวอย่าง"
+      ชัดเจนเมื่อยังไม่ login; ผู้ใช้ใหม่ที่ยังไม่มีผู้สูงอายุจะเห็นหน้า
+      "เพิ่มผู้สูงอายุคนแรก" แทนข้อมูลปลอม
+- [x] กราฟแนวโน้มสุขภาพ (`HealthChart`) คำนวณจากข้อมูลจริงทั้งหมดแล้ว
+      ไม่ใช้ mock data อีกต่อไป
 - [x] หน้า "ข้อความ" เป็น real-time chat จริงผ่าน WebSocket (ไม่ใช่
       placeholder แล้ว) — ส่ง/รับข้อความสดโดยไม่ต้อง refresh
 - [x] RBAC ต่อ endpoint (family/caregiver/nurse/admin เห็น/แก้ข้อมูล
@@ -186,11 +223,21 @@ access token กลับมาเก็บใน `localStorage`
       ผู้ดูแล (หน้า "ผู้ดูแล" เฉพาะโปรไฟล์ตัวเอง) — เก็บไฟล์จริงที่ backend
       (`backend/uploads/`) ไม่ใช่ URL ปลอม แสดงผลทันทีทุกจุดที่มีรูป
       (การ์ด dashboard, รายการผู้ดูแล)
+- [x] PDPA: หน้า [`/privacy`](app/privacy/page.tsx) อธิบายนโยบายครบถ้วน;
+      หน้า "ตั้งค่า" มีปุ่มดาวน์โหลดข้อมูลของตัวเองเป็น JSON
+      (`GET /api/auth/me/export`) และลบบัญชีถาวรพร้อมข้อมูลที่เกี่ยวข้อง
+      ทั้งหมด (`DELETE /api/auth/me`, ต้องยืนยันรหัสผ่าน)
+- [x] Backend พร้อม production: อ่าน `ALLOWED_ORIGINS` สำหรับ CORS,
+      รองรับ PostgreSQL (`postgres://` แปลงเป็น `postgresql://`
+      อัตโนมัติ), seed demo data เฉพาะตอน `SEED_DEMO_DATA=true`,
+      ปฏิเสธการสตาร์ทถ้า `ENVIRONMENT=production` แต่ `SECRET_KEY` ยัง
+      เป็นค่า default, ไม่มี bcrypt version warning แล้ว
 - [x] Responsive (Desktop / Tablet / Mobile)
 - [x] ไม่มี Console Error
 - [x] Playwright E2E ครอบคลุม login → dashboard → CRUD พื้นฐาน
-- [x] Backend unit test (pytest) — 40 tests ครอบคลุม auth/RBAC/refresh
-      token rotation/permissions/payment/upload validation
+- [x] Backend unit test (pytest) — 53 tests ครอบคลุม auth/RBAC/refresh
+      token rotation/permissions/payment/upload validation/production
+      config guard/PDPA export & delete
       (`cd backend && source .venv/bin/activate && pytest`)
 - [x] ทดสอบ deploy จริงกับ MySQL ผ่าน docker-compose — รันจริงแล้ว
       (`docker compose up --build`), ยืนยันตาราง + seed data อยู่ใน MySQL

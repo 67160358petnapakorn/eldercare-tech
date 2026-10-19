@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LockKeyhole, ShieldCheck, UserRound } from "lucide-react";
-import { apiFetch } from "@/lib/api";
+import Link from "next/link";
+import { Download, LockKeyhole, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { apiFetch, clearTokens } from "@/lib/api";
+import Modal from "@/components/Modal";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -16,6 +18,12 @@ export default function SettingsPage() {
     newPassword: "",
     confirmPassword: "",
   });
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -65,6 +73,45 @@ export default function SettingsPage() {
       });
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleExportData() {
+    setExportError("");
+    setExporting(true);
+    try {
+      const data = await apiFetch("/api/auth/me/export");
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `eldercare-tech-data-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : "ดาวน์โหลดข้อมูลไม่สำเร็จ");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleDeleteAccount(e: React.FormEvent) {
+    e.preventDefault();
+    setDeleteError("");
+    setDeleting(true);
+    try {
+      await apiFetch("/api/auth/me", {
+        method: "DELETE",
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      clearTokens();
+      router.replace("/");
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "ลบบัญชีไม่สำเร็จ");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -187,6 +234,75 @@ export default function SettingsPage() {
           ระบบจะเก็บข้อมูลด้านรหัสผ่านแบบเข้ารหัส และการเปลี่ยนแปลงจะมีผลทันทีหลังจากยืนยันตัวตนเรียบร้อยแล้ว
         </p>
       </div>
+
+      <div className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card">
+        <h3 className="text-lg font-semibold text-ink">ข้อมูลส่วนบุคคล (PDPA)</h3>
+        <p className="mt-2 text-sm leading-6 text-ink-soft">
+          อ่านรายละเอียดวิธีที่เราเก็บและใช้ข้อมูลของคุณได้ที่{" "}
+          <Link href="/privacy" className="font-semibold text-brand-blue hover:underline">
+            นโยบายความเป็นส่วนตัว
+          </Link>
+        </p>
+
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            data-test="export-data-btn"
+            onClick={handleExportData}
+            disabled={exporting}
+            className="btn-secondary flex items-center justify-center gap-2"
+          >
+            <Download size={16} /> {exporting ? "กำลังเตรียมไฟล์..." : "ดาวน์โหลดข้อมูลของฉัน"}
+          </button>
+          <button
+            type="button"
+            data-test="delete-account-btn"
+            onClick={() => setShowDeleteModal(true)}
+            className="flex items-center justify-center gap-2 rounded-lg border border-status-red/30 px-4 py-2.5 text-sm font-semibold text-status-red hover:bg-status-red-bg"
+          >
+            <Trash2 size={16} /> ลบบัญชี
+          </button>
+        </div>
+        {exportError ? <p className="mt-3 text-sm text-status-red">{exportError}</p> : null}
+      </div>
+
+      {showDeleteModal ? (
+        <Modal title="ลบบัญชีถาวร" onClose={() => setShowDeleteModal(false)}>
+          <form onSubmit={handleDeleteAccount} className="space-y-4" data-test="delete-account-form">
+            <p className="rounded-lg border border-status-red/30 bg-status-red-bg px-3 py-2 text-sm text-status-red">
+              การลบบัญชีจะลบข้อมูลผู้สูงอายุ ยา นัดหมาย และข้อมูลอื่นทั้งหมดที่ผูกกับบัญชีนี้
+              อย่างถาวร ไม่สามารถกู้คืนได้
+            </p>
+            <label className="space-y-1 text-sm text-ink-soft">
+              <span>กรอกรหัสผ่านเพื่อยืนยัน</span>
+              <input
+                data-test="delete-account-password"
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                className="input-field"
+                required
+              />
+            </label>
+
+            {deleteError ? <p className="rounded-lg border border-status-red/30 bg-status-red-bg px-3 py-2 text-sm text-status-red">{deleteError}</p> : null}
+
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setShowDeleteModal(false)} className="btn-secondary">
+                ยกเลิก
+              </button>
+              <button
+                data-test="delete-account-confirm-btn"
+                type="submit"
+                disabled={deleting}
+                className="rounded-lg bg-status-red px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95 disabled:opacity-50"
+              >
+                {deleting ? "กำลังลบบัญชี..." : "ลบบัญชีถาวร"}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      ) : null}
     </div>
   );
 }

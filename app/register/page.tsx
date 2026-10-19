@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Leaf, CheckCircle2, Users, HeartHandshake, Stethoscope } from "lucide-react";
+import { Leaf, Users, HeartHandshake, Stethoscope } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { getErrorMessage, setTokens, translateErrorMessage } from "@/lib/api";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -35,34 +37,24 @@ function buildUsername(firstName: string, lastName: string, email: string): stri
   return sanitizeUsername(email.split("@")[0] ?? "");
 }
 
-// FastAPI/Pydantic 422 responses send `detail` as an array of
-// { msg, loc, ... } objects, not a string — `new Error(data?.detail)`
-// used to stringify that array as "[object Object]". Other error
-// responses (409, etc.) still send a plain string.
-function getErrorMessage(detail: unknown): string {
-  if (typeof detail === "string") return detail;
-  if (Array.isArray(detail)) {
-    const messages = detail
-      .map((item) => (item && typeof item === "object" && "msg" in item ? String((item as { msg: unknown }).msg) : null))
-      .filter((msg): msg is string => Boolean(msg));
-    if (messages.length > 0) return messages.join(", ");
-  }
-  return "สมัครสมาชิกไม่สำเร็จ";
+function randomSuffix(): string {
+  return String(Math.floor(1000 + Math.random() * 9000));
 }
 
-// Translates the handful of validation/conflict errors a user is likely
-// to actually hit into Thai; anything else falls through unchanged.
-function translateErrorMessage(message: string, status?: number): string {
-  if (status === 409) return "อีเมลนี้ถูกใช้แล้ว";
-  const lower = message.toLowerCase();
-  if (lower.includes("email") && lower.includes("valid")) return "รูปแบบอีเมลไม่ถูกต้อง";
-  if (lower.includes("password") && lower.includes("6")) return "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร";
-  return message;
+async function registerRequest(payload: Record<string, unknown>) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => ({}));
+  return { response, data };
 }
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [accountType, setAccountType] = useState<(typeof accountTypes)[number]["key"]>("family");
-  const [submitted, setSubmitted] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -83,58 +75,61 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!agreedToPrivacy) {
+      setError("กรุณายินยอมนโยบายความเป็นส่วนตัวก่อนสมัครสมาชิก");
+      return;
+    }
+
     const username = buildUsername(firstName, lastName, email);
 
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-          first_name: firstName,
-          last_name: lastName,
-          phone,
-          role: accountType,
-        }),
-      });
+      const basePayload = {
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        role: accountType,
+      };
 
-      const data = await response.json().catch(() => ({}));
+      let { response, data } = await registerRequest({ ...basePayload, username });
 
-      if (!response.ok) {
-        throw new Error(translateErrorMessage(getErrorMessage(data?.detail), response.status));
+      // A 409 here could be a duplicate email or a duplicate username —
+      // retry once with a random suffix in case it was just the username,
+      // so a Thai-name collision (e.g. two "somchai"s) doesn't make the
+      // user re-type the whole form for something they can't control.
+      if (response.status === 409) {
+        ({ response, data } = await registerRequest({ ...basePayload, username: `${username}${randomSuffix()}` }));
       }
 
-      setSubmitted(true);
+      if (!response.ok) {
+        throw new Error(translateErrorMessage(getErrorMessage(data?.detail, "สมัครสมาชิกไม่สำเร็จ"), response.status));
+      }
+
+      // Register straight into a session instead of bouncing the user to
+      // /login to re-enter the password they just typed.
+      const loginResponse = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const loginData = await loginResponse.json().catch(() => ({}));
+      if (!loginResponse.ok) {
+        // Registered fine but auto-login failed for some reason — don't
+        // strand the user, just send them to log in manually instead.
+        router.push("/login");
+        return;
+      }
+
+      setTokens(loginData.access_token, loginData.refresh_token);
+      router.push("/dashboard/elders");
     } catch (err) {
       setError(err instanceof Error ? err.message : "สมัครสมาชิกไม่สำเร็จ");
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (submitted) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-surface-soft px-5 py-10">
-        <div className="card w-full max-w-md p-8 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-status-green-bg text-status-green">
-            <CheckCircle2 size={30} aria-hidden="true" />
-          </div>
-          <h1 className="mt-5 text-xl font-bold text-ink">สมัครสมาชิกสำเร็จ</h1>
-          <p className="mt-2 text-ink-soft">
-            ยินดีต้อนรับสู่ Eldercare Tech คุณสามารถเข้าสู่ระบบเพื่อเริ่มใช้งานได้ทันที
-          </p>
-          <Link href="/login" className="btn-primary mt-6 w-full">
-            ไปหน้าเข้าสู่ระบบ
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -251,13 +246,30 @@ export default function RegisterPage() {
               </div>
             </fieldset>
 
+            <label className="flex items-start gap-2.5 text-sm text-ink-soft">
+              <input
+                type="checkbox"
+                checked={agreedToPrivacy}
+                onChange={(e) => setAgreedToPrivacy(e.target.checked)}
+                required
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-surface-line accent-brand-blue"
+              />
+              <span>
+                ฉันยินยอมให้เก็บและใช้ข้อมูลตาม{" "}
+                <Link href="/privacy" target="_blank" className="font-semibold text-brand-blue hover:underline">
+                  นโยบายความเป็นส่วนตัว
+                </Link>{" "}
+                ของ Eldercare Tech
+              </span>
+            </label>
+
             {error ? (
               <p className="rounded-lg border border-status-red/30 bg-status-red-bg px-3 py-2 text-sm text-status-red">
                 {error}
               </p>
             ) : null}
 
-            <button type="submit" className="btn-primary mt-1 w-full" disabled={isSubmitting}>
+            <button type="submit" className="btn-primary mt-1 w-full" disabled={isSubmitting || !agreedToPrivacy}>
               {isSubmitting ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิก"}
             </button>
           </form>

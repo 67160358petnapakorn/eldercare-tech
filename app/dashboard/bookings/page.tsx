@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarCheck2, UserRound, ClipboardList, Clock3, Plus, Trash2, Loader2, Edit2, Save, QrCode, CheckCircle2, X } from "lucide-react";
 import { apiFetch as fetchWithToken } from "@/lib/api";
+import Modal from "@/components/Modal";
 
 type Payment = {
   id: number;
@@ -17,8 +18,8 @@ type Payment = {
 };
 
 const emptyForm = {
-  elder_id: 1,
-  caregiver_id: 1,
+  elder_id: "",
+  caregiver_id: "",
   date: "",
   start_time: "09:00",
   end_time: "13:00",
@@ -30,9 +31,12 @@ const emptyForm = {
 export default function BookingsPage() {
   const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
+  const [elders, setElders] = useState<any[]>([]);
+  const [caregivers, setCaregivers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [form, setForm] = useState<any>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -44,8 +48,14 @@ export default function BookingsPage() {
 
   async function loadBookings() {
     try {
-      const data = await fetchWithToken("/api/bookings?size=50");
-      setItems(data.items ?? []);
+      const [bookingData, elderData, caregiverData] = await Promise.all([
+        fetchWithToken("/api/bookings?size=50"),
+        fetchWithToken("/api/elders?size=100"),
+        fetchWithToken("/api/caregivers?size=100"),
+      ]);
+      setItems(bookingData.items ?? []);
+      setElders(elderData.items ?? []);
+      setCaregivers(caregiverData.items ?? []);
     } catch {
       router.replace("/login");
     } finally {
@@ -57,12 +67,25 @@ export default function BookingsPage() {
     loadBookings();
   }, [router]);
 
+  function elderName(elderId: number) {
+    const elder = elders.find((e) => e.id === elderId);
+    return elder ? `${elder.first_name} ${elder.last_name}` : `#${elderId}`;
+  }
+
+  function caregiverName(caregiverId: number) {
+    const caregiver = caregivers.find((c) => c.id === caregiverId);
+    return caregiver ? caregiver.name : `#${caregiverId}`;
+  }
+
   function startCreate() {
+    if (elders.length === 0 || caregivers.length === 0) {
+      window.alert("ต้องมีข้อมูลผู้สูงอายุและผู้ดูแลอย่างน้อยอย่างละ 1 รายการก่อนจึงจะสร้างการจองได้");
+      return;
+    }
     setEditingId(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, elder_id: elders[0].id, caregiver_id: caregivers[0].id });
     setShowForm(true);
     setError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function startEdit(item: any) {
@@ -167,11 +190,15 @@ export default function BookingsPage() {
   }
 
   async function handleDelete(id: number) {
+    if (!window.confirm("ยืนยันลบการจองนี้?")) return;
+    setDeletingId(id);
     try {
       await fetchWithToken(`/api/bookings/${id}`, { method: "DELETE" });
       setItems((current) => current.filter((item) => item.id !== id));
-    } catch {
-      router.replace("/login");
+    } catch (err: any) {
+      window.alert(err?.message ?? "ลบไม่สำเร็จ");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -190,15 +217,24 @@ export default function BookingsPage() {
       </div>
 
       {showForm ? (
-        <form onSubmit={handleSubmit} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card" data-test="booking-form">
+        <Modal title={editingId ? "แก้ไขการจอง" : "เพิ่มการจอง"} onClose={cancelForm}>
+        <form onSubmit={handleSubmit} data-test="booking-form">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="space-y-1 text-sm text-ink-soft">
-              <span>Elder ID</span>
-              <input data-test="booking-input-elder-id" type="number" value={form.elder_id} onChange={(e) => setForm((c: any) => ({ ...c, elder_id: Number(e.target.value) }))} className="input-shell h-11 w-full border px-3" required />
+              <span>ผู้สูงอายุ</span>
+              <select data-test="booking-input-elder-id" value={form.elder_id} onChange={(e) => setForm((c: any) => ({ ...c, elder_id: Number(e.target.value) }))} className="input-field" required>
+                {elders.map((elder) => (
+                  <option key={elder.id} value={elder.id}>{elder.first_name} {elder.last_name}</option>
+                ))}
+              </select>
             </label>
             <label className="space-y-1 text-sm text-ink-soft">
-              <span>Caregiver ID</span>
-              <input data-test="booking-input-caregiver-id" type="number" value={form.caregiver_id} onChange={(e) => setForm((c: any) => ({ ...c, caregiver_id: Number(e.target.value) }))} className="input-shell h-11 w-full border px-3" required />
+              <span>ผู้ดูแล</span>
+              <select data-test="booking-input-caregiver-id" value={form.caregiver_id} onChange={(e) => setForm((c: any) => ({ ...c, caregiver_id: Number(e.target.value) }))} className="input-field" required>
+                {caregivers.map((caregiver) => (
+                  <option key={caregiver.id} value={caregiver.id}>{caregiver.name}</option>
+                ))}
+              </select>
             </label>
             <label className="space-y-1 text-sm text-ink-soft">
               <span>วันที่</span>
@@ -242,11 +278,15 @@ export default function BookingsPage() {
             </button>
           </div>
         </form>
+        </Modal>
       ) : null}
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-6 text-ink-muted">
-          ยังไม่มีข้อมูลการจอง
+        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-10 text-center">
+          <p className="text-ink-muted">ยังไม่มีข้อมูลการจอง</p>
+          <button type="button" onClick={startCreate} className="btn-primary mt-4 inline-flex items-center gap-2">
+            <Plus size={16} /> เพิ่มการจองแรก
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -258,7 +298,7 @@ export default function BookingsPage() {
                     <ClipboardList size={18} />
                     <span className="font-semibold">{booking.service_type}</span>
                   </div>
-                  <p className="mt-2 text-sm text-ink-soft">{booking.note ?? "-"}</p>
+                  <p className="mt-2 text-sm text-ink-soft">{elderName(booking.elder_id)} • {booking.note ?? "-"}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="rounded-full bg-brand-blue-light px-2.5 py-1 text-xs font-medium text-brand-blue">{booking.status}</span>
@@ -280,7 +320,14 @@ export default function BookingsPage() {
                   <button type="button" data-test={"booking-edit-" + booking.id} onClick={() => startEdit(booking)} className="rounded-full p-2 hover:bg-surface-soft" aria-label="แก้ไข">
                     <Edit2 size={16} />
                   </button>
-                  <button type="button" data-test={"booking-delete-" + booking.id} onClick={() => handleDelete(booking.id)} className="rounded-full p-2 text-status-red hover:bg-status-red-bg" aria-label="ลบการจอง">
+                  <button
+                    type="button"
+                    data-test={"booking-delete-" + booking.id}
+                    onClick={() => handleDelete(booking.id)}
+                    disabled={deletingId === booking.id}
+                    className="rounded-full p-2 text-status-red hover:bg-status-red-bg disabled:opacity-50"
+                    aria-label="ลบการจอง"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -297,7 +344,7 @@ export default function BookingsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-ink-muted">ผู้ดูแล</p>
-                  <p className="mt-1 flex items-center gap-2 text-sm font-medium text-ink"><UserRound size={14} />{booking.caregiver_id ?? "-"}</p>
+                  <p className="mt-1 flex items-center gap-2 text-sm font-medium text-ink"><UserRound size={14} />{caregiverName(booking.caregiver_id)}</p>
                 </div>
               </div>
             </div>

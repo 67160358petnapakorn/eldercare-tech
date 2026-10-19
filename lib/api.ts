@@ -11,6 +11,32 @@ export class ApiError extends Error {
   }
 }
 
+// FastAPI/Pydantic 422 responses send `detail` as an array of
+// { msg, loc, ... } objects, not a string — passing that straight into
+// `new Error(detail)` stringifies the array as "[object Object]". Other
+// error responses (409, 404, custom HTTPException details, etc.) still
+// send a plain string, so both shapes need handling here.
+export function getErrorMessage(detail: unknown, fallback = "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง"): string {
+  if (typeof detail === "string" && detail.trim()) return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => (item && typeof item === "object" && "msg" in item ? String((item as { msg: unknown }).msg) : null))
+      .filter((msg): msg is string => Boolean(msg));
+    if (messages.length > 0) return messages.join(", ");
+  }
+  return fallback;
+}
+
+// Translates the handful of validation/conflict errors a user is likely
+// to actually hit into Thai; anything else falls through unchanged.
+export function translateErrorMessage(message: string, status?: number): string {
+  if (status === 409) return "อีเมลนี้ถูกใช้แล้ว";
+  const lower = message.toLowerCase();
+  if (lower.includes("email") && lower.includes("valid")) return "รูปแบบอีเมลไม่ถูกต้อง";
+  if (lower.includes("password") && lower.includes("6")) return "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร";
+  return message;
+}
+
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -106,7 +132,8 @@ export async function apiFetch(path: string, init: RequestInit = {}, allowRetry 
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
-    throw new ApiError(payload?.detail ?? "request-failed", response.status);
+    const message = translateErrorMessage(getErrorMessage(payload?.detail, "request-failed"), response.status);
+    throw new ApiError(message, response.status);
   }
 
   return response.json().catch(() => ({}));
@@ -146,7 +173,8 @@ export async function uploadPhoto(file: File): Promise<{ url: string }> {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
-    throw new ApiError(payload?.detail ?? "upload-failed", response.status);
+    const message = translateErrorMessage(getErrorMessage(payload?.detail, "อัปโหลดไฟล์ไม่สำเร็จ"), response.status);
+    throw new ApiError(message, response.status);
   }
 
   return response.json();

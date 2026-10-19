@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.core.config import settings
 from app.core.init_db import initialize_database
 from app.routers.auth import router as auth_router
 from app.routers.dashboard import router as dashboard_router
@@ -37,6 +38,10 @@ app.add_middleware(
     # exact match, which surfaces in the browser as a generic
     # "Failed to fetch". Match any of these origins instead.
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1|0\.0\.0\.0):\d+|https://eldercare-tech(-[a-z0-9-]+)?\.vercel\.app",
+    # Deploy-specific origins (e.g. a custom domain, or a Vercel project
+    # under a different name) come from ALLOWED_ORIGINS instead of being
+    # hardcoded here — see Settings.ALLOWED_ORIGINS.
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

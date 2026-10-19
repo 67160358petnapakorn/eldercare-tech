@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, Hospital, Stethoscope, Plus, Trash2, Loader2, Edit2, Save, X } from "lucide-react";
+import { CalendarClock, Hospital, Stethoscope, Plus, Trash2, Loader2, Edit2, Save } from "lucide-react";
 import { apiFetch as fetchWithToken } from "@/lib/api";
+import Modal from "@/components/Modal";
 
 const emptyForm = {
-  elder_id: 1,
+  elder_id: "",
   hospital_name: "",
   doctor_name: "",
   department: "",
@@ -20,17 +21,23 @@ const emptyForm = {
 export default function AppointmentsPage() {
   const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
+  const [elders, setElders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [form, setForm] = useState<any>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   async function loadAppointments() {
     try {
-      const data = await fetchWithToken("/api/appointments?size=50");
-      setItems(data.items ?? []);
+      const [appointmentData, elderData] = await Promise.all([
+        fetchWithToken("/api/appointments?size=50"),
+        fetchWithToken("/api/elders?size=100"),
+      ]);
+      setItems(appointmentData.items ?? []);
+      setElders(elderData.items ?? []);
     } catch {
       router.replace("/login");
     } finally {
@@ -42,12 +49,20 @@ export default function AppointmentsPage() {
     loadAppointments();
   }, [router]);
 
+  function elderName(elderId: number) {
+    const elder = elders.find((e) => e.id === elderId);
+    return elder ? `${elder.first_name} ${elder.last_name}` : `#${elderId}`;
+  }
+
   function startCreate() {
+    if (elders.length === 0) {
+      window.alert("กรุณาเพิ่มข้อมูลผู้สูงอายุก่อน จึงจะเพิ่มนัดหมายได้");
+      return;
+    }
     setEditingId(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, elder_id: elders[0].id });
     setShowForm(true);
     setError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function startEdit(item: any) {
@@ -106,11 +121,15 @@ export default function AppointmentsPage() {
   }
 
   async function handleDelete(id: number) {
+    if (!window.confirm("ยืนยันลบนัดหมายนี้?")) return;
+    setDeletingId(id);
     try {
       await fetchWithToken(`/api/appointments/${id}`, { method: "DELETE" });
       setItems((current) => current.filter((item) => item.id !== id));
-    } catch {
-      router.replace("/login");
+    } catch (err: any) {
+      window.alert(err?.message ?? "ลบไม่สำเร็จ");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -129,11 +148,16 @@ export default function AppointmentsPage() {
       </div>
 
       {showForm ? (
-        <form onSubmit={handleSubmit} className="rounded-2xl border border-surface-line bg-surface p-5 shadow-card" data-test="appointment-form">
+        <Modal title={editingId ? "แก้ไขนัดหมาย" : "เพิ่มนัดหมาย"} onClose={cancelForm}>
+        <form onSubmit={handleSubmit} data-test="appointment-form">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="space-y-1 text-sm text-ink-soft">
-              <span>Elder ID</span>
-              <input data-test="appointment-input-elder-id" type="number" value={form.elder_id} onChange={(e) => setForm((c: any) => ({ ...c, elder_id: Number(e.target.value) }))} className="input-shell h-11 w-full border px-3" required />
+              <span>ผู้สูงอายุ</span>
+              <select data-test="appointment-input-elder-id" value={form.elder_id} onChange={(e) => setForm((c: any) => ({ ...c, elder_id: Number(e.target.value) }))} className="input-field" required>
+                {elders.map((elder) => (
+                  <option key={elder.id} value={elder.id}>{elder.first_name} {elder.last_name}</option>
+                ))}
+              </select>
             </label>
             <label className="space-y-1 text-sm text-ink-soft">
               <span>สถานะ</span>
@@ -166,7 +190,7 @@ export default function AppointmentsPage() {
             </label>
             <label className="space-y-1 text-sm text-ink-soft md:col-span-2">
               <span>เหตุผล</span>
-              <input value={form.reason} onChange={(e) => setForm((c: any) => ({ ...c, reason: e.target.value }))} className="input-shell h-11 w-full border px-3" required />
+              <input data-test="appointment-input-reason" value={form.reason} onChange={(e) => setForm((c: any) => ({ ...c, reason: e.target.value }))} className="input-shell h-11 w-full border px-3" required />
             </label>
             <label className="space-y-1 text-sm text-ink-soft md:col-span-2">
               <span>หมายเหตุ</span>
@@ -184,11 +208,15 @@ export default function AppointmentsPage() {
             </button>
           </div>
         </form>
+        </Modal>
       ) : null}
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-6 text-ink-muted">
-          ยังไม่มีข้อมูลนัดหมาย
+        <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-10 text-center">
+          <p className="text-ink-muted">ยังไม่มีข้อมูลนัดหมาย</p>
+          <button type="button" onClick={startCreate} className="btn-primary mt-4 inline-flex items-center gap-2">
+            <Plus size={16} /> เพิ่มนัดหมายแรก
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -200,14 +228,21 @@ export default function AppointmentsPage() {
                     <Hospital size={18} />
                     <span className="font-semibold">{item.hospital_name}</span>
                   </div>
-                  <p className="mt-2 text-sm text-ink-soft">{item.department}</p>
+                  <p className="mt-2 text-sm text-ink-soft">{item.department} • {elderName(item.elder_id)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="rounded-full bg-brand-blue-light px-2.5 py-1 text-xs font-medium text-brand-blue">{item.status}</span>
                   <button type="button" data-test={"appointment-edit-" + item.id} onClick={() => startEdit(item)} className="rounded-full p-2 hover:bg-surface-soft" aria-label="แก้ไข">
                     <Edit2 size={16} />
                   </button>
-                  <button type="button" data-test={"appointment-delete-" + item.id} onClick={() => handleDelete(item.id)} className="rounded-full p-2 text-status-red hover:bg-status-red-bg" aria-label="ลบนัดหมาย">
+                  <button
+                    type="button"
+                    data-test={"appointment-delete-" + item.id}
+                    onClick={() => handleDelete(item.id)}
+                    disabled={deletingId === item.id}
+                    className="rounded-full p-2 text-status-red hover:bg-status-red-bg disabled:opacity-50"
+                    aria-label="ลบนัดหมาย"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>

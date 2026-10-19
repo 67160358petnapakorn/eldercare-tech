@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import LandingElderPreview from "@/components/LandingElderPreview";
 
 const features = [
   {
@@ -98,47 +99,10 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Dashboard preview mockup (no external images) */}
+            {/* Dashboard preview: real data for a logged-in user with an
+                elder on file, otherwise the labeled example card below */}
             <div className="relative">
-              <div className="card p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-ink">คุณแม่สมใจ</p>
-                    <p className="text-sm text-ink-muted">อายุ 68 ปี</p>
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-status-green-bg px-3 py-1 text-sm font-medium text-status-green">
-                    🟢 สุขภาพคงที่
-                  </span>
-                </div>
-
-                <div className="mt-5 rounded-lg border border-surface-line p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-ink-muted">อัตราการเต้นหัวใจ</p>
-                    <p className="text-sm font-semibold text-status-green">ปกติ</p>
-                  </div>
-                  <div className="mt-2 flex items-end gap-2">
-                    <span className="text-3xl font-bold text-ink">72</span>
-                    <span className="pb-1 text-sm text-ink-muted">BPM</span>
-                  </div>
-                  <svg viewBox="0 0 200 40" className="mt-3 h-10 w-full text-brand-blue" aria-hidden="true">
-                    <polyline
-                      className="pulse-line"
-                      points="0,20 30,20 40,6 50,34 60,20 90,20 100,10 110,30 120,20 200,20"
-                    />
-                  </svg>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-surface-soft p-3">
-                    <p className="text-xs text-ink-muted">ยาวันนี้</p>
-                    <p className="mt-1 text-sm font-semibold text-ink">1 / 3 รายการ</p>
-                  </div>
-                  <div className="rounded-lg bg-surface-soft p-3">
-                    <p className="text-xs text-ink-muted">นัดหมายถัดไป</p>
-                    <p className="mt-1 text-sm font-semibold text-ink">20 ส.ค. 2569</p>
-                  </div>
-                </div>
-              </div>
+              <LandingElderPreview />
             </div>
           </div>
         </section>

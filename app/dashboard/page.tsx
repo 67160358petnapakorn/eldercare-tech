@@ -98,10 +98,13 @@ export default function DashboardPage() {
     lastUpdated: fallbackElder.lastUpdated,
   });
   const [healthSummary, setHealthSummary] = useState(buildHealthStats(null));
+  const [healthRecords, setHealthRecords] = useState<{ heart_rate: number; created_at: string }[]>([]);
   const [medications, setMedications] = useState<MedicationItem[]>([]);
   const [appointment, setAppointment] = useState<AppointmentItem | null>(null);
   const [caregiver, setCaregiver] = useState<CaregiverItem | null>(null);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [hasElder, setHasElder] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -109,6 +112,7 @@ export default function DashboardPage() {
         const authData = await apiFetch("/api/auth/me");
         const fullName = [authData.first_name, authData.last_name].filter(Boolean).join(" ") || authData.username || "ผู้ใช้งาน";
         setUserName(fullName);
+        setUserRole(authData.role);
 
         const [summaryData, elderData] = await Promise.all([
           apiFetch("/api/dashboard/summary").catch(() => null),
@@ -121,6 +125,7 @@ export default function DashboardPage() {
         }
 
         const elderItem = elderData?.items?.[0] ?? null;
+        setHasElder(Boolean(elderItem));
         let elderId: number | null = null;
         if (elderItem) {
           elderId = elderItem.id;
@@ -140,12 +145,14 @@ export default function DashboardPage() {
 
         if (elderId) {
           const [healthData, medsData, apptData, bookingData, alertsData] = await Promise.all([
-            apiFetch(`/api/health-records?elder_id=${elderId}&size=1`).catch(() => null),
+            apiFetch(`/api/health-records?elder_id=${elderId}&size=100`).catch(() => null),
             apiFetch(`/api/medications?elder_id=${elderId}&size=3`).catch(() => null),
             apiFetch(`/api/appointments?elder_id=${elderId}&size=5`).catch(() => null),
             apiFetch(`/api/bookings?elder_id=${elderId}&size=1`).catch(() => null),
             apiFetch(`/api/health-alerts?elder_id=${elderId}&size=3`).catch(() => null),
           ]);
+
+          setHealthRecords(healthData?.items ?? []);
 
           const latestRecord = healthData?.items?.[0] ?? null;
           if (latestRecord) {
@@ -218,6 +225,34 @@ export default function DashboardPage() {
     return null;
   }
 
+  if (!hasElder && userRole === "family") {
+    return (
+      <div className="flex flex-col items-center gap-6 rounded-2xl border border-dashed border-surface-line bg-surface p-10 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-blue-light text-3xl" aria-hidden="true">
+          👋
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-ink">ยินดีต้อนรับ {userName}</h2>
+          <p className="mt-2 max-w-md text-ink-soft">
+            เริ่มต้นใช้งานด้วยการเพิ่มข้อมูลผู้สูงอายุที่คุณดูแล เพื่อให้ Eldercare Tech
+            ช่วยติดตามสุขภาพ ยา และนัดหมายให้คุณได้
+          </p>
+        </div>
+        <Link href="/dashboard/elders" className="btn-primary">
+          เพิ่มผู้สูงอายุคนแรก
+        </Link>
+      </div>
+    );
+  }
+
+  if (!hasElder) {
+    return (
+      <div className="rounded-2xl border border-dashed border-surface-line bg-surface p-10 text-center text-ink-muted">
+        ยังไม่มีข้อมูลผู้สูงอายุที่คุณเข้าถึงได้
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <DashboardCard>
@@ -274,7 +309,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <HealthChart />
+      <HealthChart records={healthRecords} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <MedicationCard items={medications} />

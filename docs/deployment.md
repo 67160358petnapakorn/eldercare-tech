@@ -20,13 +20,21 @@ fallback ไปเรียก `http://localhost:8000` ซึ่งหมาย�
 5. เมื่อ deploy สำเร็จ จะได้ URL แบบ
    `https://eldercare-tech-api.onrender.com` — **คัดลอก URL นี้ไว้**
 
-> **ข้อควรรู้**: free tier ของ Render ใช้ disk แบบ ephemeral —
-> ข้อมูลใน SQLite จะรีเซ็ตทุกครั้งที่ deploy ใหม่หรือ service restart
-> (เช่น หลัง sleep จาก inactivity) แต่ไม่ต้องกังวลเรื่อง demo login
-> เพราะ `init_db.py` seed บัญชี demo ให้อัตโนมัติทุกครั้งที่ฐานข้อมูล
-> ว่างอยู่แล้ว ถ้าต้องการข้อมูลถาวรจริงๆ ค่อยย้ายไปใช้ Render
-> PostgreSQL (ต้องแก้ `DATABASE_URL` และเพิ่ม `psycopg2-binary` ใน
-> `requirements.txt`)
+> **ข้อควรรู้**: `render.yaml` provision ฐานข้อมูล **PostgreSQL** (free
+> tier) ให้โดยอัตโนมัติ และต่อ `DATABASE_URL` ให้เองผ่าน
+> `fromDatabase` — ข้อมูลจึงเป็น**ของจริง ถาวร** ไม่หายตอน redeploy
+> หรือ service sleep/restart (ต่างจาก SQLite แบบ ephemeral ที่เคยใช้)
+> บัญชี demo (family/caregiver/admin) จะถูก seed อัตโนมัติครั้งแรกที่
+> ฐานข้อมูลว่าง เพราะ blueprint ตั้ง `SEED_DEMO_DATA=true` ไว้ให้ —
+> ถ้า deploy สำหรับผู้ใช้จริง (ไม่ใช่ demo) ให้ลบ env var นี้ออกหรือ
+> ตั้งเป็น `false` ก่อน apply blueprint
+
+ถ้า frontend ของคุณ deploy อยู่คนละโดเมนกับ
+`https://eldercare-tech.vercel.app` (เช่น custom domain หรือ Vercel
+project คนละชื่อ) ให้แก้ค่า `ALLOWED_ORIGINS` ใน Render dashboard →
+service นี้ → **Environment** ให้ตรงกับโดเมนจริงของคุณ (คั่นหลายโดเมน
+ด้วย comma ได้) — `*.vercel.app` ของ project ชื่อ `eldercare-tech` ถูก
+อนุญาตไว้แล้วโดยไม่ต้องตั้งค่าเพิ่ม (ดู regex ใน `backend/app/main.py`)
 
 ## 2. ตั้งค่า Vercel ให้รู้จัก backend URL
 

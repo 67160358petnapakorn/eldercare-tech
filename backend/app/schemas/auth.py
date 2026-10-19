@@ -73,6 +73,12 @@ class LogoutRequest(BaseModel):
     refresh_token: str | None = None
 
 
+class DeleteAccountRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    password: str
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

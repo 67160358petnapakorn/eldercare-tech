@@ -7,6 +7,8 @@ services:
     plan: free
     healthCheckPath: /api/health
     envVars:
+      - key: ENVIRONMENT
+        value: production
       - key: SECRET_KEY
         generateValue: true
       - key: ALGORITHM
@@ -17,5 +19,25 @@ services:
         value: "7"
       - key: PROMPTPAY_ID
         value: "0812345678"
+      # This is a portfolio/demo deployment, not a real production service —
+      # the login page advertises the family/caregiver/admin demo accounts,
+      # so the demo data needs to actually exist on first boot. A real
+      # deployment with real users would leave this false (the Settings
+      # default) instead.
+      - key: SEED_DEMO_DATA
+        value: "true"
+      # Update this if the frontend is deployed under a different Vercel
+      # project name/custom domain — the eldercare-tech*.vercel.app pattern
+      # is already allowed by main.py's CORS regex regardless of this value.
+      - key: ALLOWED_ORIGINS
+        value: https://eldercare-tech.vercel.app
       - key: DATABASE_URL
-        value: sqlite:////app/eldercare.db
+        fromDatabase:
+          name: eldercare-tech-db
+          property: connectionString
+
+databases:
+  - name: eldercare-tech-db
+    plan: free
+    databaseName: eldercare
+    user: eldercare

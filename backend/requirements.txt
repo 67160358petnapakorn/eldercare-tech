@@ -2,11 +2,17 @@ fastapi==0.116.1
 uvicorn[standard]==0.35.0
 sqlalchemy==2.0.43
 pymysql==1.1.1
+psycopg2-binary==2.9.10
 python-dotenv==1.0.1
 email-validator==2.2.0
 passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.5.0
-bcrypt==4.1.2
+# Pinned <4.1: passlib 1.7.4's bcrypt backend probes bcrypt.__about__.__version__
+# to detect the installed version, which bcrypt>=4.1 removed — that mismatch
+# doesn't break hashing/verification, but logs a misleading "(trapped) error
+# reading bcrypt version" warning on every startup. 4.0.1 still has the
+# attribute, so passlib's version check succeeds silently.
+bcrypt==4.0.1
 pydantic==2.12.0
 qrcode[pil]==7.4.2
 python-multipart==0.0.20
