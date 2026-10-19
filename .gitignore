@@ -28,6 +28,18 @@ yarn-error.log*
 .env*.local
 .env
 
+# python backend
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.db
+
+# test artifacts
+/test-results/
+/playwright-report/
+
 # vercel
 .vercel
 

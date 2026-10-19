@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Leaf, CheckCircle2, Users, HeartHandshake, Stethoscope } from "lucide-react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
 const accountTypes = [
   { key: "family", label: "ครอบครัว", icon: Users },
   { key: "caregiver", label: "ผู้ดูแล", icon: HeartHandshake },
@@ -13,11 +15,59 @@ const accountTypes = [
 export default function RegisterPage() {
   const [accountType, setAccountType] = useState<(typeof accountTypes)[number]["key"]>("family");
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // Phase 1: Mock registration only — no database write.
-    setSubmitted(true);
+    setError("");
+
+    const formData = new FormData(e.currentTarget);
+    const firstName = String(formData.get("firstName") ?? "").trim();
+    const lastName = String(formData.get("lastName") ?? "").trim();
+    const email = String(formData.get("regEmail") ?? "").trim();
+    const phone = String(formData.get("phone") ?? "").trim();
+    const password = String(formData.get("regPassword") ?? "");
+    const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+    if (password !== confirmPassword) {
+      setError("รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน");
+      return;
+    }
+
+    const username = `${firstName}.${lastName}`.replace(/[^a-zA-Z0-9.]/g, "").toLowerCase() || email.split("@")[0];
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          first_name: firstName,
+          last_name: lastName,
+          phone,
+          role: accountType,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.detail ?? "สมัครสมาชิกไม่สำเร็จ");
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "สมัครสมาชิกไม่สำเร็จ");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -59,13 +109,13 @@ export default function RegisterPage() {
                 <label htmlFor="firstName" className="mb-1.5 block text-sm font-medium text-ink">
                   ชื่อ
                 </label>
-                <input id="firstName" required placeholder="สมชาย" className="input-field" />
+                <input id="firstName" name="firstName" required placeholder="สมชาย" className="input-field" />
               </div>
               <div>
                 <label htmlFor="lastName" className="mb-1.5 block text-sm font-medium text-ink">
                   นามสกุล
                 </label>
-                <input id="lastName" required placeholder="ใจดี" className="input-field" />
+                <input id="lastName" name="lastName" required placeholder="ใจดี" className="input-field" />
               </div>
             </div>
 
@@ -75,6 +125,7 @@ export default function RegisterPage() {
               </label>
               <input
                 id="regEmail"
+                name="regEmail"
                 type="email"
                 required
                 placeholder="you@example.com"
@@ -88,6 +139,7 @@ export default function RegisterPage() {
               </label>
               <input
                 id="phone"
+                name="phone"
                 type="tel"
                 required
                 placeholder="08X-XXX-XXXX"
@@ -102,6 +154,7 @@ export default function RegisterPage() {
                 </label>
                 <input
                   id="regPassword"
+                  name="regPassword"
                   type="password"
                   required
                   placeholder="••••••••"
@@ -114,6 +167,7 @@ export default function RegisterPage() {
                 </label>
                 <input
                   id="confirmPassword"
+                  name="confirmPassword"
                   type="password"
                   required
                   placeholder="••••••••"
@@ -148,8 +202,14 @@ export default function RegisterPage() {
               </div>
             </fieldset>
 
-            <button type="submit" className="btn-primary mt-1 w-full">
-              สมัครสมาชิก
+            {error ? (
+              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </p>
+            ) : null}
+
+            <button type="submit" className="btn-primary mt-1 w-full" disabled={isSubmitting}>
+              {isSubmitting ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิก"}
             </button>
           </form>
 

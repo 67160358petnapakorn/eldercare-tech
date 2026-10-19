@@ -17,6 +17,10 @@ import {
   LogOut,
   Menu,
   X,
+  Building2,
+  FileText,
+  Star,
+  ShieldCheck,
 } from "lucide-react";
 
 const overviewLinks = [
@@ -30,10 +34,14 @@ const careLinks = [
   { href: "/dashboard/appointments", label: "นัดหมาย", icon: CalendarDays },
   { href: "/dashboard/caregivers", label: "ผู้ดูแล", icon: Users },
   { href: "/dashboard/bookings", label: "การจอง", icon: ClipboardList },
+  { href: "/dashboard/partners", label: "Partner", icon: Building2 },
+  { href: "/dashboard/referrals", label: "Referral", icon: FileText },
+  { href: "/dashboard/reviews", label: "Review", icon: Star },
 ];
 
 const otherLinks = [
   { href: "/dashboard/notifications", label: "การแจ้งเตือน", icon: Bell },
+  { href: "/dashboard/users", label: "ผู้ใช้งาน", icon: ShieldCheck },
   { href: "/dashboard/messages", label: "ข้อความ", icon: MessageCircle },
   { href: "/dashboard/settings", label: "ตั้งค่า", icon: Settings },
 ];
@@ -101,17 +109,49 @@ function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ onLogout }: { onLogout?: () => void }) {
   const [open, setOpen] = useState(false);
+
+  const handleLogoutClick = () => {
+    onLogout?.();
+    setOpen(false);
+  };
+
+  function SidebarContentWithLogout({ onNavigate }: { onNavigate: () => void }) {
+    return (
+      <div className="flex h-full flex-col">
+        <Link
+          href="/"
+          className="flex items-center gap-2 px-3 py-2 text-lg font-bold text-brand-blue"
+        >
+          <Leaf size={22} className="text-brand-green" aria-hidden="true" />
+          Eldercare Tech
+        </Link>
+
+        <nav className="mt-6 flex flex-1 flex-col gap-6 overflow-y-auto">
+          <NavGroup label="Overview" links={overviewLinks} onNavigate={onNavigate} />
+          <NavGroup label="Care" links={careLinks} onNavigate={onNavigate} />
+          <NavGroup label="Other" links={otherLinks} onNavigate={onNavigate} />
+        </nav>
+
+        <button
+          type="button"
+          onClick={handleLogoutClick}
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[0.95rem] font-medium text-status-red hover:bg-status-red-bg"
+        >
+          <LogOut size={19} aria-hidden="true" />
+          ออกจากระบบ
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>
-      {/* Desktop sidebar */}
       <aside className="hidden w-72 shrink-0 border-r border-surface-line bg-white p-5 lg:block">
-        <SidebarContent onNavigate={() => {}} />
+        <SidebarContentWithLogout onNavigate={() => {}} />
       </aside>
 
-      {/* Mobile trigger */}
       <button
         className="fixed left-4 top-4 z-40 flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg border border-surface-line bg-white shadow-card lg:hidden"
         onClick={() => setOpen(true)}
@@ -120,7 +160,6 @@ export default function Sidebar() {
         <Menu size={22} className="text-ink" />
       </button>
 
-      {/* Mobile drawer */}
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
@@ -136,7 +175,7 @@ export default function Sidebar() {
             >
               <X size={22} />
             </button>
-            <SidebarContent onNavigate={() => setOpen(false)} />
+            <SidebarContentWithLogout onNavigate={() => setOpen(false)} />
           </aside>
         </div>
       )}
