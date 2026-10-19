@@ -4,8 +4,8 @@
 
 Phase 2 เชื่อม **Backend API จริงแล้ว** (FastAPI + SQLAlchemy + JWT
 Authentication ที่มี refresh token + RBAC ต่อ endpoint, Real-time chat
-ผ่าน WebSocket) ทุกหน้าของ dashboard เรียกข้อมูลจาก API แทน mock data
-เดิม ยังไม่มี Payment / IoT / Hospital API — ดูหัวข้อ
+ผ่าน WebSocket, ชำระเงินผ่าน PromptPay QR) ทุกหน้าของ dashboard เรียก
+ข้อมูลจาก API แทน mock data เดิม ยังไม่มี IoT / Hospital API — ดูหัวข้อ
 [Not in Phase 2](#not-in-phase-2)
 
 สถาปัตยกรรมและ technology stack ของโปรเจคอยู่ที่
@@ -28,6 +28,7 @@ Authentication ที่มี refresh token + RBAC ต่อ endpoint, Real-tim
 - Pydantic v2 (schema validation)
 - python-jose (JWT, access + rotating single-use refresh tokens) + passlib/bcrypt (password hashing)
 - FastAPI WebSocket (real-time chat, `/api/ws/messages`)
+- `qrcode` + Pillow (PromptPay QR generation — pure-Python, no payment gateway/API key needed)
 - SQLite (local dev) / MySQL 8.0 (production, ผ่าน Docker)
 
 **Infra / Testing**
@@ -60,7 +61,7 @@ eldercare-tech/
 │   │   ├── core/                     # config, database, security, permissions, init_db (seed data)
 │   │   ├── models/                   # SQLAlchemy models (13 domains + refresh tokens)
 │   │   ├── schemas/                  # Pydantic schemas
-│   │   └── routers/                  # API routers (auth, users, elders, messages (+ WebSocket), ...)
+│   │   └── routers/                  # API routers (auth, users, elders, messages (+ WebSocket), payments, ...)
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── docs/
@@ -152,6 +153,10 @@ access token กลับมาเก็บใน `localStorage`
 - [x] RBAC ต่อ endpoint (family/caregiver/nurse/admin เห็น/แก้ข้อมูล
       ตามสิทธิ์จริง ไม่ใช่แค่ login แล้วเข้าถึงได้หมด)
 - [x] Refresh token หมุนเวียนอัตโนมัติ ไม่ต้อง login ใหม่บ่อยๆ
+- [x] ชำระเงินผ่าน PromptPay QR ในหน้า "การจอง" — คำนวณยอดจาก
+      hourly_rate ของผู้ดูแล × ระยะเวลา สร้าง QR code จริง
+      (EMV QR / BOT PromptPay spec) ยืนยันการชำระแบบ demo (ไม่ได้ต่อ
+      ธนาคารจริง ไม่มี merchant account)
 - [x] Health Cards + Chart แสดงผล (วันนี้ / 7 วัน / 30 วัน)
 - [x] Responsive (Desktop / Tablet / Mobile)
 - [x] ไม่มี Console Error
@@ -161,8 +166,14 @@ access token กลับมาเก็บใน `localStorage`
 
 ## Not in Phase 2
 
-❌ Payment · ❌ IoT device sync · ❌ Hospital API integration
+❌ IoT device sync · ❌ Hospital API integration
 
-WebSocket chat ใช้ in-memory connection registry ต่อ process เดียว —
-รองรับ local/dev ได้สบาย แต่ถ้า deploy จริงแบบหลาย worker ต้องมี
-pub/sub (เช่น Redis) มาช่วยกระจายข้อความข้าม process
+**ข้อจำกัดที่ควรรู้:**
+- WebSocket chat ใช้ in-memory connection registry ต่อ process เดียว —
+  รองรับ local/dev ได้สบาย แต่ถ้า deploy จริงแบบหลาย worker ต้องมี
+  pub/sub (เช่น Redis) มาช่วยกระจายข้อความข้าม process
+- Payment เป็น QR จริงตาม PromptPay spec (สแกนได้ด้วยแอปธนาคารจริง)
+  แต่ **ไม่มี merchant account/webhook จากธนาคาร** — การ "ยืนยันชำระเงิน"
+  เป็นปุ่มที่ผู้จ่ายกดเอง (demo) ไม่ใช่การยืนยันจากธนาคารจริง ถ้าจะใช้งาน
+  จริงต้องต่อผ่าน payment gateway (เช่น Omise, 2C2P) ที่มี webhook
+  ยืนยันธุรกรรม

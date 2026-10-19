@@ -32,6 +32,20 @@ def can_access_elder(current_user: User, elder_id: int, db: Session) -> bool:
     return False
 
 
+def can_access_booking(current_user: User, booking: Booking, db: Session) -> bool:
+    """Shared ownership/role check for a specific booking (used by the
+    booking detail endpoints and by payments, which hang off a booking)."""
+    if current_user.role in {"admin", "nurse"}:
+        return True
+    if current_user.role == "family":
+        elder = db.query(Elder).filter(Elder.id == booking.elder_id).first()
+        return elder is not None and elder.user_id == current_user.id
+    if current_user.role == "caregiver":
+        caregiver = db.query(Caregiver).filter(Caregiver.user_id == current_user.id).first()
+        return caregiver is not None and caregiver.id == booking.caregiver_id
+    return False
+
+
 def _family_has_booking_with_caregiver(family_user: User, caregiver_user: User, db: Session) -> bool:
     caregiver = db.query(Caregiver).filter(Caregiver.user_id == caregiver_user.id).first()
     if not caregiver:

@@ -16,6 +16,7 @@ from app.routers.referrals import router as referral_router
 from app.routers.reviews import router as review_router
 from app.routers.notifications import router as notification_router
 from app.routers.messages import router as message_router
+from app.routers.payments import router as payment_router
 
 app = FastAPI(
     title="Eldercare Tech API",
@@ -56,6 +57,7 @@ app.include_router(referral_router)
 app.include_router(review_router)
 app.include_router(notification_router)
 app.include_router(message_router)
+app.include_router(payment_router)
 
 
 @app.get("/")

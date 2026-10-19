@@ -2,8 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarCheck2, UserRound, ClipboardList, Clock3, Plus, Trash2, Loader2, Edit2, Save } from "lucide-react";
+import { CalendarCheck2, UserRound, ClipboardList, Clock3, Plus, Trash2, Loader2, Edit2, Save, QrCode, CheckCircle2, X } from "lucide-react";
 import { apiFetch as fetchWithToken } from "@/lib/api";
+
+type Payment = {
+  id: number;
+  booking_id: number;
+  amount: number;
+  currency: string;
+  status: "pending" | "paid" | "cancelled";
+  qr_payload: string;
+  qr_image: string | null;
+  paid_at: string | null;
+};
 
 const emptyForm = {
   elder_id: 1,
@@ -25,6 +36,11 @@ export default function BookingsPage() {
   const [error, setError] = useState("");
   const [form, setForm] = useState<any>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [paymentsByBooking, setPaymentsByBooking] = useState<Record<number, Payment | null>>({});
+  const [activePaymentBookingId, setActivePaymentBookingId] = useState<number | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
 
   async function loadBookings() {
     try {
@@ -108,6 +124,45 @@ export default function BookingsPage() {
       setError(err?.message ?? "บันทึกไม่สำเร็จ");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function openPayment(bookingId: number) {
+    setActivePaymentBookingId(bookingId);
+    setPaymentError("");
+    setPaymentLoading(true);
+    try {
+      let payment: Payment | null = paymentsByBooking[bookingId] ?? (await fetchWithToken(`/api/bookings/${bookingId}/payment`));
+      if (!payment) {
+        payment = await fetchWithToken(`/api/bookings/${bookingId}/payment`, { method: "POST" });
+      }
+      setPaymentsByBooking((current) => ({ ...current, [bookingId]: payment }));
+    } catch (err: any) {
+      setPaymentError(err?.message ?? "ไม่สามารถสร้าง QR ชำระเงินได้");
+    } finally {
+      setPaymentLoading(false);
+    }
+  }
+
+  function closePayment() {
+    setActivePaymentBookingId(null);
+    setPaymentError("");
+  }
+
+  async function confirmPayment() {
+    if (!activePaymentBookingId) return;
+    const payment = paymentsByBooking[activePaymentBookingId];
+    if (!payment) return;
+
+    setConfirming(true);
+    setPaymentError("");
+    try {
+      const updated = await fetchWithToken(`/api/payments/${payment.id}/confirm`, { method: "POST" });
+      setPaymentsByBooking((current) => ({ ...current, [activePaymentBookingId]: updated }));
+    } catch (err: any) {
+      setPaymentError(err?.message ?? "ยืนยันการชำระเงินไม่สำเร็จ");
+    } finally {
+      setConfirming(false);
     }
   }
 
@@ -207,6 +262,21 @@ export default function BookingsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="rounded-full bg-brand-blue-light px-2.5 py-1 text-xs font-medium text-brand-blue">{booking.status}</span>
+                  {paymentsByBooking[booking.id]?.status === "paid" ? (
+                    <span className="flex items-center gap-1 rounded-full bg-status-green-bg px-2.5 py-1 text-xs font-medium text-status-green">
+                      <CheckCircle2 size={13} />
+                      ชำระแล้ว
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openPayment(booking.id)}
+                      className="flex items-center gap-1 rounded-full bg-status-amber-bg px-2.5 py-1 text-xs font-medium text-status-amber hover:brightness-95"
+                    >
+                      <QrCode size={13} />
+                      ชำระเงิน
+                    </button>
+                  )}
                   <button type="button" data-test={"booking-edit-" + booking.id} onClick={() => startEdit(booking)} className="rounded-full p-2 hover:bg-surface-soft" aria-label="แก้ไข">
                     <Edit2 size={16} />
                   </button>
@@ -234,6 +304,67 @@ export default function BookingsPage() {
           ))}
         </div>
       )}
+
+      {activePaymentBookingId !== null ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closePayment}>
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-ink">ชำระเงินผ่าน PromptPay</h3>
+              <button type="button" onClick={closePayment} className="rounded-full p-1.5 text-ink-soft hover:bg-surface-soft" aria-label="ปิด">
+                <X size={18} />
+              </button>
+            </div>
+
+            {paymentLoading ? (
+              <div className="flex flex-col items-center gap-2 py-10 text-ink-muted">
+                <Loader2 size={24} className="animate-spin" />
+                กำลังสร้าง QR...
+              </div>
+            ) : paymentError ? (
+              <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{paymentError}</p>
+            ) : (() => {
+              const payment = paymentsByBooking[activePaymentBookingId];
+              if (!payment) return null;
+
+              if (payment.status === "paid") {
+                return (
+                  <div className="flex flex-col items-center gap-3 py-8 text-center">
+                    <CheckCircle2 size={48} className="text-status-green" />
+                    <p className="text-lg font-semibold text-ink">ชำระเงินสำเร็จ</p>
+                    <p className="text-ink-muted">{payment.amount.toLocaleString("th-TH")} {payment.currency}</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="mt-4 flex flex-col items-center gap-3">
+                  <p className="text-2xl font-bold text-ink">
+                    {payment.amount.toLocaleString("th-TH")} <span className="text-base font-medium text-ink-muted">{payment.currency}</span>
+                  </p>
+                  {payment.qr_image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={payment.qr_image} alt="PromptPay QR" className="h-56 w-56 rounded-xl border border-surface-line p-2" />
+                  ) : null}
+                  <p className="text-center text-xs text-ink-muted">
+                    สแกนด้วยแอปธนาคารเพื่อชำระเงิน — ตัวอย่างสาธิต ยังไม่เชื่อมระบบธนาคารจริง
+                  </p>
+                  <button
+                    type="button"
+                    onClick={confirmPayment}
+                    disabled={confirming}
+                    className="btn-primary mt-2 w-full"
+                  >
+                    {confirming ? "กำลังยืนยัน..." : "ฉันชำระเงินแล้ว"}
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
