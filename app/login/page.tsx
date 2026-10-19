@@ -36,6 +36,31 @@ const demoAccounts = [
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
+// FastAPI/Pydantic 422 responses send `detail` as an array of
+// { msg, loc, ... } objects, not a string — `new Error(data?.detail)`
+// used to stringify that array as "[object Object]". Other error
+// responses (401 on bad credentials, etc.) still send a plain string.
+function getErrorMessage(detail: unknown): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => (item && typeof item === "object" && "msg" in item ? String((item as { msg: unknown }).msg) : null))
+      .filter((msg): msg is string => Boolean(msg));
+    if (messages.length > 0) return messages.join(", ");
+  }
+  return "เข้าสู่ระบบไม่สำเร็จ";
+}
+
+// Translates the handful of validation errors a user is likely to
+// actually hit into Thai; anything else falls through unchanged.
+function translateErrorMessage(message: string, status?: number): string {
+  if (status === 409) return "อีเมลนี้ถูกใช้แล้ว";
+  const lower = message.toLowerCase();
+  if (lower.includes("email") && lower.includes("valid")) return "รูปแบบอีเมลไม่ถูกต้อง";
+  if (lower.includes("password") && lower.includes("6")) return "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร";
+  return message;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
@@ -67,7 +92,7 @@ export default function LoginPage() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data?.detail ?? "เข้าสู่ระบบไม่สำเร็จ");
+        throw new Error(translateErrorMessage(getErrorMessage(data?.detail), response.status));
       }
 
       setTokens(data.access_token, data.refresh_token);

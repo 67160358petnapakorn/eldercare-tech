@@ -13,6 +13,53 @@ const accountTypes = [
   { key: "nurse", label: "พยาบาล", icon: Stethoscope },
 ] as const;
 
+// Keeps only what the backend's username validator accepts, then trims
+// leading/trailing dots. Must lowercase *before* filtering — filtering
+// against the lowercase character class first would otherwise strip every
+// uppercase English letter too.
+function sanitizeUsername(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9._]/g, "")
+    .replace(/^\.+|\.+$/g, "");
+}
+
+// Thai (or any non-Latin) names sanitize down to "" once the Thai
+// characters are stripped, not just the "." joiner — a plain truthiness
+// check on the old `firstName.lastName` string missed that ("." is
+// truthy), which is what let a 2-char invalid username slip past to the
+// backend instead of falling back to the email-derived one.
+function buildUsername(firstName: string, lastName: string, email: string): string {
+  const fromName = sanitizeUsername(`${firstName}.${lastName}`);
+  if (fromName.length >= 3) return fromName;
+  return sanitizeUsername(email.split("@")[0] ?? "");
+}
+
+// FastAPI/Pydantic 422 responses send `detail` as an array of
+// { msg, loc, ... } objects, not a string — `new Error(data?.detail)`
+// used to stringify that array as "[object Object]". Other error
+// responses (409, etc.) still send a plain string.
+function getErrorMessage(detail: unknown): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => (item && typeof item === "object" && "msg" in item ? String((item as { msg: unknown }).msg) : null))
+      .filter((msg): msg is string => Boolean(msg));
+    if (messages.length > 0) return messages.join(", ");
+  }
+  return "สมัครสมาชิกไม่สำเร็จ";
+}
+
+// Translates the handful of validation/conflict errors a user is likely
+// to actually hit into Thai; anything else falls through unchanged.
+function translateErrorMessage(message: string, status?: number): string {
+  if (status === 409) return "อีเมลนี้ถูกใช้แล้ว";
+  const lower = message.toLowerCase();
+  if (lower.includes("email") && lower.includes("valid")) return "รูปแบบอีเมลไม่ถูกต้อง";
+  if (lower.includes("password") && lower.includes("6")) return "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร";
+  return message;
+}
+
 export default function RegisterPage() {
   const [accountType, setAccountType] = useState<(typeof accountTypes)[number]["key"]>("family");
   const [submitted, setSubmitted] = useState(false);
@@ -36,7 +83,7 @@ export default function RegisterPage() {
       return;
     }
 
-    const username = `${firstName}.${lastName}`.replace(/[^a-zA-Z0-9.]/g, "").toLowerCase() || email.split("@")[0];
+    const username = buildUsername(firstName, lastName, email);
 
     setIsSubmitting(true);
 
@@ -60,7 +107,7 @@ export default function RegisterPage() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data?.detail ?? "สมัครสมาชิกไม่สำเร็จ");
+        throw new Error(translateErrorMessage(getErrorMessage(data?.detail), response.status));
       }
 
       setSubmitted(true);
