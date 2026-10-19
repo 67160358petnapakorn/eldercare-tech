@@ -43,7 +43,7 @@ export default function HealthPage() {
     ? [
         { id: "heart", label: "อัตราการเต้นหัวใจ", value: `${items[0].heart_rate ?? 0} BPM`, icon: HeartPulse },
         { id: "bp", label: "ความดันโลหิต", value: `${items[0].systolic ?? 0}/${items[0].diastolic ?? 0} mmHg`, icon: Activity },
-        { id: "temp", label: "อุณหภูมิ", value: `${items[0].temperature ?? 0} °C`, icon: Thermometer },
+        { id: "temp", label: "อุณหภูมิ", value: `${(items[0].temperature ?? 0).toFixed(1)} °C`, icon: Thermometer },
         { id: "spo2", label: "ออกซิเจนในเลือด", value: `${items[0].spo2 ?? 0} %`, icon: Droplets },
       ]
     : [];

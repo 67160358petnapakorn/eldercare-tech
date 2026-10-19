@@ -64,7 +64,7 @@ function buildHealthStats(record: any) {
     {
       id: "temperature",
       title: "อุณหภูมิร่างกาย",
-      value: String(record?.temperature ?? 36.7),
+      value: (record?.temperature ?? 36.7).toFixed(1),
       unit: "°C",
       status: "normal" as StatusLevel,
       statusLabel: "ปกติ",

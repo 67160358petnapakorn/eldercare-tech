@@ -126,7 +126,7 @@ def seed_demo_data() -> None:
                     heart_rate=72 + idx,
                     systolic=118 + idx,
                     diastolic=76 + idx,
-                    temperature=36.7 + (idx * 0.1),
+                    temperature=round(36.7 + (idx * 0.1), 1),
                     spo2=98,
                     blood_sugar=95 + idx,
                     weight=62.0 + idx,

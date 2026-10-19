@@ -18,6 +18,8 @@ export default function DashboardLayout({
     role: "Family",
     avatar: "🧑",
   });
+  const [careItemCount, setCareItemCount] = useState<number | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem("eldercare_access_token");
@@ -49,6 +51,31 @@ export default function DashboardLayout({
         localStorage.removeItem("eldercare_access_token");
         localStorage.removeItem("eldercare_token_type");
         router.replace("/login");
+        return;
+      }
+
+      try {
+        const [summaryRes, notificationsRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/dashboard/summary`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_BASE_URL}/api/notifications?size=50`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        if (summaryRes.ok) {
+          const summary = await summaryRes.json();
+          setCareItemCount(summary?.counts?.elders ?? 0);
+        }
+
+        if (notificationsRes.ok) {
+          const notifications = await notificationsRes.json();
+          const unread = (notifications?.items ?? []).filter((n: { is_read: boolean }) => !n.is_read).length;
+          setUnreadCount(unread);
+        }
+      } catch {
+        // dashboard chrome degrades gracefully without summary/notification counts
       }
     }
 
@@ -72,16 +99,23 @@ export default function DashboardLayout({
               <h1 className="text-lg font-bold text-ink sm:text-xl">
                 สวัสดี คุณ{user.firstName} 👋
               </h1>
-              <p className="text-sm text-ink-muted">วันนี้คุณมีรายการดูแล 3 รายการ</p>
+              <p className="text-sm text-ink-muted">
+                {careItemCount === null
+                  ? "กำลังโหลดข้อมูล..."
+                  : `วันนี้คุณมีรายการดูแล ${careItemCount} รายการ`}
+              </p>
             </div>
 
             <div className="flex items-center gap-4">
               <button
+                onClick={() => router.push("/dashboard/notifications")}
                 className="relative cursor-pointer rounded-full p-2 text-ink-soft hover:bg-surface-soft"
-                aria-label="การแจ้งเตือน"
+                aria-label={unreadCount > 0 ? `การแจ้งเตือน (${unreadCount} รายการใหม่)` : "การแจ้งเตือน"}
               >
                 <Bell size={22} />
-                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-status-red" />
+                {unreadCount > 0 ? (
+                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-status-red" />
+                ) : null}
               </button>
 
               <div className="flex items-center gap-2.5">
