@@ -72,6 +72,20 @@ eldercare-tech/
 
 ## Run
 
+### Quick start (แนะนำ) — รันทั้งระบบด้วยคำสั่งเดียว
+
+```bash
+./dev.sh
+```
+
+สคริปต์นี้จะสร้าง Python venv + `npm install` ให้อัตโนมัติในครั้งแรก
+แล้วรัน backend (port 8000) และ frontend (port 3000) พร้อมกัน กด
+`Ctrl+C` เพื่อหยุดทั้งคู่ วิธีนี้ช่วยกัน error "Failed to fetch" ที่
+เกิดจากลืมเปิด backend ก่อนเข้าใช้เว็บ
+
+ถ้าอยากรันแยกเพื่อดู log แต่ละฝั่ง หรือ debug เฉพาะจุด ใช้ขั้นตอน
+ด้านล่างแทนได้
+
 ### 1. Backend (FastAPI)
 
 ```bash
